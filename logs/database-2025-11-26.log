@@ -1,0 +1,3 @@
+[2025-11-26 12:36:45] [ERROR] [DATABASE] Connection failed {"host":"localhost","database":"ba_dere_exchange","error_code":1045}
+[2025-11-26 16:09:52] [ERROR] [DATABASE] Connection failed {"host":"localhost","database":"ba_dere_exchange","error_code":1045}
+[2025-11-26 16:12:25] [ERROR] [DATABASE] Connection failed {"host":"localhost","database":"ba_dere_exchange","error_code":1045}
