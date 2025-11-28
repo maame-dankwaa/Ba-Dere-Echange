@@ -1,9 +1,12 @@
 <?php
-
 ini_set('display_errors',1);
 ini_set('display_startup_errors',1);
 error_reporting(E_ALL);
 
+// Temporary flag to surface backend errors directly in the browser
+if (!defined('SHOW_DEBUG_ERRORS')) {
+    define('SHOW_DEBUG_ERRORS', true);
+}
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();

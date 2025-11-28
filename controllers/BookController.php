@@ -388,9 +388,16 @@ class BookController
             Logger::error('Book listing failed', [
                 'seller_id' => $sellerId,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            $_SESSION['form_errors'] = ['general' => 'Could not create listing. Please try again.'];
+            // Show actual error in debug mode
+            $errorMessage = 'Could not create listing. Please try again.';
+            if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
+                $errorMessage .= ' Error: ' . htmlspecialchars($e->getMessage());
+            }
+
+            $_SESSION['form_errors'] = ['general' => $errorMessage];
             $_SESSION['old_form_data'] = $data;
             $this->redirect('../view/list_book.php');
         }
