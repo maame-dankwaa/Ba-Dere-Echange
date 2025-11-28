@@ -410,18 +410,18 @@ class BookController
             ]);
 
             // Show actual error in debug mode
-            $errorMessage = 'Could not create listing. Please try again.';
-            
-            // Always show more details in debug mode
             if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
-                $errorMessage .= ' Error: ' . htmlspecialchars($e->getMessage());
+                // In debug mode, show the full error message
+                $errorMessage = 'Could not create listing. Error: ' . htmlspecialchars($e->getMessage());
                 
                 // Add more context for common errors
                 if (strpos($e->getMessage(), 'SQLSTATE') !== false || strpos($e->getMessage(), 'Database') !== false) {
                     $errorMessage .= ' This appears to be a database error. Please check that all required fields are filled correctly.';
                 }
             } else {
-                // Even in production, provide a bit more context
+                // In production, provide user-friendly messages
+                $errorMessage = 'Could not create listing. Please try again.';
+                
                 if (strpos($e->getMessage(), 'SQLSTATE[23000]') !== false) {
                     $errorMessage = 'Could not create listing. This may be due to missing required information or a duplicate entry.';
                 } elseif (strpos($e->getMessage(), 'SQLSTATE[42S22]') !== false) {
