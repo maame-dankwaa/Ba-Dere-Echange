@@ -1,7 +1,12 @@
-<?phpini_set('display_errors',1);
+<?php
+ini_set('display_errors',1);
 ini_set('display_startup_errors',1);
 error_reporting(E_ALL);
 
+// Temporary flag to surface backend errors directly in the browser
+if (!defined('SHOW_DEBUG_ERRORS')) {
+    define('SHOW_DEBUG_ERRORS', true);
+}
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -28,41 +33,104 @@ error_reporting(E_ALL);
     // Get database instance for queries
     $db = Database::getInstance();
 
-    // Get real statistics
-    $userCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_users", []);
-    $totalUsers = $userCountResult['total'] ?? 0;
+    // Get real statistics with error handling
+    try {
+        $userCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_users", []);
+        $totalUsers = $userCountResult['total'] ?? 0;
+    } catch (Throwable $e) {
+        $totalUsers = 0;
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading user count: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 
-    $bookCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_books", []);
-    $totalBooks = $bookCountResult['total'] ?? 0;
+    try {
+        $bookCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_books", []);
+        $totalBooks = $bookCountResult['total'] ?? 0;
+    } catch (Throwable $e) {
+        $totalBooks = 0;
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading book count: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 
-    $transactionCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_transactions", []);
-    $totalTransactions = $transactionCountResult['total'] ?? 0;
+    try {
+        $transactionCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_transactions", []);
+        $totalTransactions = $transactionCountResult['total'] ?? 0;
+    } catch (Throwable $e) {
+        $totalTransactions = 0;
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading transaction count: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 
-    $pendingListingsResult = $db->fetch("SELECT COUNT(*) as total FROM fp_books WHERE status = 'pending'", []);
-    $pendingListings = $pendingListingsResult['total'] ?? 0;
+    try {
+        $pendingListingsResult = $db->fetch("SELECT COUNT(*) as total FROM fp_books WHERE status = 'pending'", []);
+        $pendingListings = $pendingListingsResult['total'] ?? 0;
+    } catch (Throwable $e) {
+        $pendingListings = 0;
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading pending listings: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 
     // Get vendor application stats
-    $appStats = $applicationModel->getStatistics();
-    $pendingApplications = (int)$appStats['pending_count'];
+    try {
+        $appStats = $applicationModel->getStatistics();
+        $pendingApplications = (int)($appStats['pending_count'] ?? 0);
+    } catch (Throwable $e) {
+        $pendingApplications = 0;
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading vendor application stats: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 
     // Get contact message stats
-    $contactStats = $contactModel->getStats();
-    $newContactMessages = (int)$contactStats['new_count'];
+    try {
+        $contactStats = $contactModel->getStats();
+        $newContactMessages = (int)($contactStats['new_count'] ?? 0);
+    } catch (Throwable $e) {
+        $newContactMessages = 0;
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading contact message stats: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 
     // Get recent transactions
-    $recentTransactions = $db->fetchAll("
-        SELECT
-            t.*,
-            b.title as book_title,
-            buyer.username as buyer_username,
-            seller.username as seller_username
-        FROM fp_transactions t
-        JOIN fp_books b ON t.book_id = b.book_id
-        JOIN fp_users buyer ON t.buyer_id = buyer.user_id
-        JOIN fp_users seller ON t.seller_id = seller.user_id
-        ORDER BY t.created_at DESC
-        LIMIT 10
-    ", []);
+    try {
+        $recentTransactions = $db->fetchAll("
+            SELECT
+                t.*,
+                b.title as book_title,
+                buyer.username as buyer_username,
+                seller.username as seller_username
+            FROM fp_transactions t
+            JOIN fp_books b ON t.book_id = b.book_id
+            JOIN fp_users buyer ON t.buyer_id = buyer.user_id
+            JOIN fp_users seller ON t.seller_id = seller.user_id
+            ORDER BY t.created_at DESC
+            LIMIT 10
+        ", []);
+    } catch (Throwable $e) {
+        $recentTransactions = [];
+        if (SHOW_DEBUG_ERRORS) {
+            echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+            echo 'Error loading recent transactions: ' . htmlspecialchars($e->getMessage());
+            echo '</pre>';
+        }
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
