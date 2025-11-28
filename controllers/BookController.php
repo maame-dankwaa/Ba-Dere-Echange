@@ -156,7 +156,11 @@ class BookController
         $book = $this->book->getBookDetails($id);
 
         if (!$book) {
-            $this->renderError('Book not found.', 404);
+            http_response_code(404);
+            $this->render('error', [
+                'error_code' => 404,
+                'error_message' => 'Book not found.',
+            ]);
             return;
         }
 
@@ -342,6 +346,10 @@ class BookController
             $validator->field('isbn_doi', ['max:50'], 'ISBN/DOI');
         }
 
+        // Validate location fields
+        $validator->field('city', ['required', 'min:2', 'max:100'], 'City');
+        $validator->field('region', ['required', 'min:2', 'max:100'], 'Region');
+
         if ($validator->fails()) {
             $_SESSION['form_errors'] = $validator->errors();
             $_SESSION['old_form_data'] = $data;
@@ -369,9 +377,18 @@ class BookController
 
         // Save listing
         try {
+            // Log the data being inserted for debugging
+            if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
+                Logger::info('Attempting to create listing', [
+                    'seller_id' => $sellerId,
+                    'data_keys' => array_keys($data),
+                    'has_cover_image' => !empty($data['cover_image']),
+                ]);
+            }
+            
             $bookId = $this->book->createListing($data);
 
-            if ($bookId) {
+            if ($bookId && $bookId > 0) {
                 Logger::info('Book listing created', [
                     'book_id' => $bookId,
                     'seller_id' => $sellerId,
@@ -381,7 +398,7 @@ class BookController
                 $this->setFlash('success', 'Your book has been listed successfully!');
                 $this->redirect('../actions/single_book.php?id=' . $bookId);
             } else {
-                throw new Exception('Failed to create listing');
+                throw new Exception('Failed to create listing: createListing returned ' . var_export($bookId, true));
             }
 
         } catch (Exception $e) {
@@ -389,12 +406,29 @@ class BookController
                 'seller_id' => $sellerId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'data' => $data,
             ]);
 
             // Show actual error in debug mode
             $errorMessage = 'Could not create listing. Please try again.';
+            
+            // Always show more details in debug mode
             if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
                 $errorMessage .= ' Error: ' . htmlspecialchars($e->getMessage());
+                
+                // Add more context for common errors
+                if (strpos($e->getMessage(), 'SQLSTATE') !== false || strpos($e->getMessage(), 'Database') !== false) {
+                    $errorMessage .= ' This appears to be a database error. Please check that all required fields are filled correctly.';
+                }
+            } else {
+                // Even in production, provide a bit more context
+                if (strpos($e->getMessage(), 'SQLSTATE[23000]') !== false) {
+                    $errorMessage = 'Could not create listing. This may be due to missing required information or a duplicate entry.';
+                } elseif (strpos($e->getMessage(), 'SQLSTATE[42S22]') !== false) {
+                    $errorMessage = 'Could not create listing. Database structure error detected. Please contact support.';
+                } elseif (strpos($e->getMessage(), 'SQLSTATE[HY000]') !== false) {
+                    $errorMessage = 'Could not create listing. Database connection issue. Please try again in a moment.';
+                }
             }
 
             $_SESSION['form_errors'] = ['general' => $errorMessage];

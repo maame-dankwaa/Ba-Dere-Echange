@@ -119,7 +119,23 @@ if (!defined('SHOW_DEBUG_ERRORS')) {
     <p class="listing-subtitle">Share your academic resources with the community</p>
 
     <?php if (!empty($errors['general'])): ?>
-        <div class="alert alert-error"><?= htmlspecialchars($errors['general']) ?></div>
+        <div class="alert alert-error" style="background-color: #fee2e2; border: 2px solid #dc3545; color: #721c24; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-weight: 500;">
+            <strong style="display: block; margin-bottom: 8px;">⚠️ Error:</strong>
+            <?= htmlspecialchars($errors['general']) ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (!empty($errors) && empty($errors['general'])): ?>
+        <div class="alert alert-error" style="background-color: #fee2e2; border: 2px solid #dc3545; color: #721c24; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <strong style="display: block; margin-bottom: 8px;">⚠️ Please fix the following errors:</strong>
+            <ul style="margin: 8px 0 0 20px; padding: 0;">
+                <?php foreach ($errors as $field => $message): ?>
+                    <?php if ($field !== 'general'): ?>
+                        <li><?= htmlspecialchars($message) ?></li>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </ul>
+        </div>
     <?php endif; ?>
 
     <form id="listBookForm"
