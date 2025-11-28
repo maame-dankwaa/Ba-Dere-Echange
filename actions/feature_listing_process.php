@@ -12,11 +12,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../helpers/AuthHelper.php';
-require_once __DIR__ . '/../classes/Book.php';
-require_once __DIR__ . '/../classes/FeaturedListing.php';
-require_once __DIR__ . '/../classes/User.php';
-require_once __DIR__ . '/../config/settings/paystack.php';
+try {
+    require_once __DIR__ . '/../helpers/AuthHelper.php';
+    require_once __DIR__ . '/../classes/Book.php';
+    require_once __DIR__ . '/../classes/FeaturedListing.php';
+    require_once __DIR__ . '/../classes/User.php';
+    require_once __DIR__ . '/../config/settings/paystack.php';
+} catch (Exception $e) {
+    error_log("Error loading required files: " . $e->getMessage());
+    $_SESSION['flash_error'] = 'Error loading required files: ' . htmlspecialchars($e->getMessage());
+    header('Location: ../view/feature_listing.php?book_id=' . ($_POST['book_id'] ?? 0));
+    exit;
+}
 
 // Require authentication
 AuthHelper::requireLogin();
@@ -73,6 +80,9 @@ if ($featuredModel->isFeatured($bookId)) {
 
 // Create featured listing transaction
 try {
+    // Log that we're starting the transaction process
+    error_log("=== STARTING FEATURED LISTING PAYMENT PROCESS ===");
+    error_log("Book ID: $bookId, User ID: $userId, Duration: $durationDays, Amount: $amount");
     error_log("Creating featured listing transaction: book_id=$bookId, user_id=$userId, duration=$durationDays, amount=$amount");
     
     $transactionId = $featuredModel->createTransaction([
@@ -158,24 +168,29 @@ try {
     header('Location: ../view/feature_listing.php?book_id=' . $bookId);
     exit;
 
-} catch (Exception $e) {
-    error_log("Featured listing payment error: " . $e->getMessage());
+} catch (Throwable $e) {
+    $errorMsg = $e->getMessage();
+    $errorFile = basename($e->getFile());
+    $errorLine = $e->getLine();
+    
+    error_log("=== FEATURED LISTING PAYMENT ERROR ===");
+    error_log("Message: $errorMsg");
+    error_log("File: {$e->getFile()} Line: $errorLine");
     error_log("Stack trace: " . $e->getTraceAsString());
-    error_log("File: " . $e->getFile() . " Line: " . $e->getLine());
     
-    // Always show the actual error message (since we're in debug mode)
-    $errorMessage = 'Error: ' . htmlspecialchars($e->getMessage());
+    // Always show the actual error message
+    $errorMessage = "Error: " . htmlspecialchars($errorMsg);
+    $errorMessage .= " [{$errorFile}:{$errorLine}]";
+    
     if ($e->getPrevious()) {
-        $errorMessage .= ' (Previous: ' . htmlspecialchars($e->getPrevious()->getMessage()) . ')';
-    }
-    
-    // Add file and line info in debug mode
-    if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
-        $errorMessage .= ' [File: ' . basename($e->getFile()) . ' Line: ' . $e->getLine() . ']';
+        $errorMessage .= ' | Previous: ' . htmlspecialchars($e->getPrevious()->getMessage());
     }
     
     $_SESSION['flash_error'] = $errorMessage;
-    error_log("Setting flash error: $errorMessage");
+    error_log("Setting session flash_error to: $errorMessage");
+    error_log("Session ID: " . session_id());
+    error_log("Book ID: $bookId");
+    
     header('Location: ../view/feature_listing.php?book_id=' . $bookId);
     exit;
 }
