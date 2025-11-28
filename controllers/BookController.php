@@ -629,8 +629,9 @@ class BookController
         $extension = $this->getExtensionFromMime($mimeType);
         $filename = 'book_' . bin2hex(random_bytes(16)) . '.' . $extension;
 
-        // Create upload directory with secure permissions
-        $uploadDir = __DIR__ . '/../uploads/books/';
+        // Create upload directory outside project folder in public_html/uploads/books/
+        // __DIR__ is controllers/, so we go up 2 levels: ../../
+        $uploadDir = __DIR__ . '/../../uploads/books/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
 
@@ -645,6 +646,7 @@ class BookController
         if (!move_uploaded_file($tmpName, $targetPath)) {
             Logger::error('Failed to move uploaded file', [
                 'user_id' => $this->getUserId(),
+                'target_path' => $targetPath,
             ]);
             return ['path' => null, 'error' => 'Failed to save image. Please try again.'];
         }
@@ -652,7 +654,9 @@ class BookController
         // Set secure permissions
         chmod($targetPath, 0644);
 
-        return ['path' => 'uploads/books/' . $filename, 'error' => null];
+        // Return path relative to project root for web access
+        // Since images are in ../uploads/books/ from project root, use ../uploads/books/
+        return ['path' => '../uploads/books/' . $filename, 'error' => null];
     }
 
     /**
