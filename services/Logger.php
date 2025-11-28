@@ -34,10 +34,15 @@ class Logger
         }
 
         // Create .htaccess to prevent direct access to logs
-        $htaccessPath = $this->logPath . '/.htaccess';
-        if (!file_exists($htaccessPath)) {
-            file_put_contents($htaccessPath, "Deny from all\n");
+        $htaccess = $this->logPath . "/.htaccess";
+        try {
+            if (!file_exists($htaccess)) {
+                @file_put_contents($htaccess, "Deny from all");
+            }
+        } catch (\Throwable $e) {
+        // Fail silently
         }
+
     }
 
     /**
@@ -207,7 +212,11 @@ class Logger
 
         // Write to file
         $filename = $this->logPath . '/' . $channel . '-' . date('Y-m-d') . '.log';
-        file_put_contents($filename, $entry, FILE_APPEND | LOCK_EX);
+        try {
+            @file_put_contents($filePath, $logEntry, FILE_APPEND);
+        } catch (\Throwable $e) {
+    // Do nothing - logging must never break the app
+        }
     }
 
     /**
