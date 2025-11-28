@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/../services/Logger.php';
 
 class ContactMessage
 {
@@ -33,7 +34,7 @@ class ContactMessage
     /**
      * Get all contact messages with optional filters
      */
-    public function getAll(string $status = null, int $limit = 50, int $offset = 0): array
+    public function getAll(?string $status = null, int $limit = 50, int $offset = 0): array
     {
         $sql = "SELECT cm.*, u.username, u.email as user_email
                 FROM {$this->table} cm
@@ -63,7 +64,22 @@ class ContactMessage
                 ORDER BY cm.created_at DESC
                 LIMIT {$limit}";
 
-        return $this->db->fetchAll($sql, ['user_id' => $userId]);
+        try {
+            return $this->db->fetchAll($sql, ['user_id' => $userId]);
+        } catch (Throwable $e) {
+            Logger::database('Failed to load contact messages', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
+                echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+                echo 'Contact messages error: ' . htmlspecialchars($e->getMessage());
+                echo '</pre>';
+            }
+
+            return [];
+        }
     }
 
     /**
