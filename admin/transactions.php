@@ -1,4 +1,5 @@
-<?phpini_set('display_errors',1);
+<?php
+ini_set('display_errors',1);
 ini_set('display_startup_errors',1);
 error_reporting(E_ALL);
 
@@ -360,7 +361,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                                 </span>
                             </td>
                             <td>
-                                <small><?= date('M d, Y', strtotime($txn['created_at'])) ?></small>
+                                <small><?= $txn['created_at'] ? date('M d, Y', strtotime($txn['created_at'])) : 'N/A' ?></small>
                             </td>
                             <td>
                                 <form method="POST" style="display: flex; gap: 5px; flex-direction: column;">
