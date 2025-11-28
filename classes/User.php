@@ -132,10 +132,14 @@ class User
     {
         try {
             $sql = "SELECT
-                    (SELECT COUNT(*) FROM fp_transactions t WHERE t.buyer_id = :id) AS total_purchases,
-                    (SELECT COUNT(*) FROM fp_transactions t WHERE t.seller_id = :id) AS total_sales,
-                    (SELECT COUNT(*) FROM fp_wishlists w WHERE w.user_id = :id) AS wishlist_items";
-            $row = $this->db->fetch($sql, ['id' => $userId]);
+                    (SELECT COUNT(*) FROM fp_transactions t WHERE t.buyer_id = :buyer_id) AS total_purchases,
+                    (SELECT COUNT(*) FROM fp_transactions t WHERE t.seller_id = :seller_id) AS total_sales,
+                    (SELECT COUNT(*) FROM fp_wishlists w WHERE w.user_id = :wishlist_user_id) AS wishlist_items";
+            $row = $this->db->fetch($sql, [
+                'buyer_id' => $userId,
+                'seller_id' => $userId,
+                'wishlist_user_id' => $userId,
+            ]);
             return $row ?: [
                 'total_purchases' => 0,
                 'total_sales'     => 0,
