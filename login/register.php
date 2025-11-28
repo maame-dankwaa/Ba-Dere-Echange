@@ -69,7 +69,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         } catch (Exception $e) {
-            $error = 'An error occurred. Please try again later.';
+            // Log the detailed exception for internal debugging
+            // Assuming Logger is available through other includes (e.g., User model which uses Database)
+            Logger::getInstance()->error('User registration failed during processing.', [
+                'exception_message' => $e->getMessage(),
+                'exception_code' => $e->getCode(),
+                'exception_file' => $e->getFile(),
+                'exception_line' => $e->getLine(),
+                'stack_trace' => $e->getTraceAsString(),
+                'username_attempt' => $username,
+                'email_attempt' => $email
+            ]);
+
+            // Display a more specific error message to the user as per instruction.
+            // This provides more detail than the previous generic message.
+            $error = 'Registration failed: ' . $e->getMessage();
             $old = ['username' => $username, 'email' => $email, 'phone' => $phone, 'location' => $location];
         }
     }
