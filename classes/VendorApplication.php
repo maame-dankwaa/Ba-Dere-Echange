@@ -20,12 +20,17 @@ class VendorApplication
     {
         $row = [
             'user_id' => $data['user_id'],
-            'business_name' => $data['business_name'] ?? null,
-            'business_description' => $data['business_description'] ?? null,
-            'phone' => $data['phone'] ?? null,
-            'id_document' => $data['id_document'] ?? null,
-            'application_reason' => $data['application_reason'],
-            'status' => 'pending',
+            'institution_name' => $data['business_name'] ?? ($data['institution_name'] ?? null),
+            'institution_type' => $data['institution_type'] ?? 'individual',
+            'business_registration_number' => $data['business_registration_number'] ?? null,
+            'tax_id' => $data['tax_id'] ?? null,
+            'business_address' => $data['business_address'] ?? ($data['address'] ?? ''),
+            'business_phone' => $data['phone'] ?? $data['business_phone'] ?? '',
+            'business_email' => $data['business_email'] ?? $data['email'] ?? '',
+            'website_url' => $data['website_url'] ?? null,
+            'description' => $data['business_description'] ?? $data['application_reason'],
+            'supporting_documents' => $data['supporting_documents'] ?? $data['id_document'] ?? null,
+            'application_status' => 'pending',
             'created_at' => date('Y-m-d H:i:s')
         ];
 
@@ -38,6 +43,7 @@ class VendorApplication
     public function find(int $id): ?array
     {
         $sql = "SELECT a.*,
+                       a.application_status as status,
                        u.username, u.email, u.user_role,
                        admin.username as reviewer_username
                 FROM {$this->table} a
@@ -53,8 +59,8 @@ class VendorApplication
      */
     public function findByUserAndStatus(int $userId, string $status): ?array
     {
-        $sql = "SELECT * FROM {$this->table}
-                WHERE user_id = :user_id AND status = :status
+        $sql = "SELECT *, application_status as status FROM {$this->table}
+                WHERE user_id = :user_id AND application_status = :status
                 ORDER BY created_at DESC
                 LIMIT 1";
         return $this->db->fetch($sql, [
@@ -77,7 +83,7 @@ class VendorApplication
      */
     public function getLatestByUser(int $userId): ?array
     {
-        $sql = "SELECT * FROM {$this->table}
+        $sql = "SELECT *, application_status as status FROM {$this->table}
                 WHERE user_id = :user_id
                 ORDER BY created_at DESC
                 LIMIT 1";
@@ -90,10 +96,11 @@ class VendorApplication
     public function getByStatus(string $status, int $limit = 50): array
     {
         $sql = "SELECT a.*,
+                       a.application_status as status,
                        u.username, u.email, u.phone as user_phone, u.location
                 FROM {$this->table} a
                 INNER JOIN fp_users u ON a.user_id = u.user_id
-                WHERE a.status = :status
+                WHERE a.application_status = :status
                 ORDER BY a.created_at DESC
                 LIMIT {$limit}";
         return $this->db->fetchAll($sql, ['status' => $status]);
@@ -113,16 +120,18 @@ class VendorApplication
     public function getAllApplications(int $limit = 100): array
     {
         $sql = "SELECT a.*,
+                       a.application_status as status,
                        u.username, u.email, u.phone as user_phone, u.location,
                        admin.username as reviewer_username
                 FROM {$this->table} a
                 INNER JOIN fp_users u ON a.user_id = u.user_id
                 LEFT JOIN fp_users admin ON a.reviewed_by = admin.user_id
                 ORDER BY
-                    CASE a.status
+                    CASE a.application_status
                         WHEN 'pending' THEN 1
-                        WHEN 'approved' THEN 2
-                        WHEN 'rejected' THEN 3
+                        WHEN 'under_review' THEN 2
+                        WHEN 'approved' THEN 3
+                        WHEN 'rejected' THEN 4
                     END,
                     a.created_at DESC
                 LIMIT {$limit}";
@@ -136,7 +145,7 @@ class VendorApplication
     {
         $application = $this->find($applicationId);
 
-        if (!$application || $application['status'] !== 'pending') {
+        if (!$application || ($application['status'] ?? $application['application_status']) !== 'pending') {
             return false;
         }
 
@@ -148,7 +157,7 @@ class VendorApplication
             $updated = $this->db->update(
                 $this->table,
                 [
-                    'status' => 'approved',
+                    'application_status' => 'approved',
                     'reviewed_by' => $reviewedBy,
                     'reviewed_at' => date('Y-m-d H:i:s')
                 ],
@@ -185,18 +194,18 @@ class VendorApplication
     /**
      * Reject an application
      */
-    public function rejectApplication(int $applicationId, int $reviewedBy, string $reason = null): bool
+    public function rejectApplication(int $applicationId, int $reviewedBy, ?string $reason = null): bool
     {
         $application = $this->find($applicationId);
 
-        if (!$application || $application['status'] !== 'pending') {
+        if (!$application || ($application['status'] ?? $application['application_status']) !== 'pending') {
             return false;
         }
 
         return $this->db->update(
             $this->table,
             [
-                'status' => 'rejected',
+                    'application_status' => 'rejected',
                 'reviewed_by' => $reviewedBy,
                 'reviewed_at' => date('Y-m-d H:i:s'),
                 'rejection_reason' => $reason
@@ -213,9 +222,9 @@ class VendorApplication
     {
         $sql = "SELECT
                 COUNT(*) as total_applications,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
-                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_count,
-                SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_count
+                SUM(CASE WHEN application_status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+                SUM(CASE WHEN application_status = 'approved' THEN 1 ELSE 0 END) as approved_count,
+                SUM(CASE WHEN application_status = 'rejected' THEN 1 ELSE 0 END) as rejected_count
                 FROM {$this->table}";
 
         $row = $this->db->fetch($sql);
