@@ -104,7 +104,8 @@ class Database
 
             if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
                 echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
-                echo 'Database error: ' . htmlspecialchars($e->getMessage());
+                echo 'Database error: ' . htmlspecialchars($e->getMessage()) . PHP_EOL;
+                echo 'Query: ' . htmlspecialchars($this->truncateQuery($sql));
                 echo '</pre>';
             }
 
