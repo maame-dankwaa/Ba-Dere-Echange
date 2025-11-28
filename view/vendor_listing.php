@@ -8,7 +8,13 @@
 </head>
 <body>
     <main class="container">
-        <?php if (!empty($vendor)): ?>
+        <?php
+
+ini_set('display_errors',1);
+ini_set('display_startup_errors',1);
+error_reporting(E_ALL);
+
+ if (!empty($vendor)): ?>
             <header>
                 <h1><?= htmlspecialchars($vendor['username']) ?>'s Listings</h1>
                 <p>Location: <?= htmlspecialchars($vendor['location'] ?? '') ?></p>

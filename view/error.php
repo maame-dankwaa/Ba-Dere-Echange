@@ -50,6 +50,7 @@
         <div class="error-code"><?= htmlspecialchars($viewData['error_code'] ?? 404) ?></div>
         <h1 class="error-message">
             <?php
+
             $code = $viewData['error_code'] ?? 404;
             switch ($code) {
                 case 403:

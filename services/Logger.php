@@ -213,9 +213,10 @@ class Logger
         // Write to file
         $filename = $this->logPath . '/' . $channel . '-' . date('Y-m-d') . '.log';
         try {
-            @file_put_contents($filePath, $logEntry, FILE_APPEND);
+            @file_put_contents($filename, $entry, FILE_APPEND);
         } catch (\Throwable $e) {
-    // Do nothing - logging must never break the app
+            // During debugging it's sometimes helpful to surface why logging failed.
+            echo 'Logger write failed: ' . htmlspecialchars($e->getMessage());
         }
     }
 

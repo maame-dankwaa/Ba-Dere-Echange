@@ -10,7 +10,12 @@
     <main class="container">
         <h1>Vendors</h1>
 
-        <?php if (empty($vendors)): ?>
+        <?php
+            ini_set('display_errors',1);
+            ini_set('display_startup_errors',1);
+            error_reporting(E_ALL);
+
+ if (empty($vendors)): ?>
             <p>No vendors yet.</p>
         <?php else: ?>
             <ul class="vendor-list">
