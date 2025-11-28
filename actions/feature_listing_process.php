@@ -64,6 +64,8 @@ if ($featuredModel->isFeatured($bookId)) {
 
 // Create featured listing transaction
 try {
+    error_log("Creating featured listing transaction: book_id=$bookId, user_id=$userId, duration=$durationDays, amount=$amount");
+    
     $transactionId = $featuredModel->createTransaction([
         'book_id' => $bookId,
         'user_id' => $userId,
@@ -73,25 +75,45 @@ try {
         'payment_status' => 'pending'
     ]);
 
+    if (!$transactionId || $transactionId <= 0) {
+        throw new Exception('Failed to create featured listing transaction');
+    }
+
+    error_log("Transaction created with ID: $transactionId");
+
     // Get user email for Paystack
     $userModel = new User();
     $user = $userModel->find($userId);
+    
+    if (!$user) {
+        throw new Exception('User not found');
+    }
+    
     $userEmail = $user['email'] ?? '';
 
     if (empty($userEmail)) {
-        $_SESSION['flash_error'] = 'User email not found';
-        header('Location: ../view/manage_listings.php');
-        exit;
+        throw new Exception('User email not found in user record');
     }
+
+    error_log("User email retrieved: $userEmail");
 
     // Initialize Paystack transaction
     error_log("Initializing Paystack payment for featured listing: amount=$amount, email=$userEmail");
+    
+    // Check if Paystack function exists
+    if (!function_exists('paystack_initialize_transaction')) {
+        throw new Exception('Paystack initialization function not found. Check paystack.php config file.');
+    }
     
     $paystackResponse = paystack_initialize_transaction(
         $amount,
         $userEmail,
         'FEATURED_' . $transactionId . '_' . time()
     );
+
+    if (!is_array($paystackResponse)) {
+        throw new Exception('Invalid response from Paystack initialization. Response: ' . var_export($paystackResponse, true));
+    }
 
     error_log("Paystack response: " . json_encode($paystackResponse));
 
@@ -129,7 +151,18 @@ try {
 
 } catch (Exception $e) {
     error_log("Featured listing payment error: " . $e->getMessage());
-    $_SESSION['flash_error'] = 'An error occurred. Please try again.';
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
+    // Show actual error in debug mode
+    $errorMessage = 'An error occurred. Please try again.';
+    if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
+        $errorMessage = 'Error: ' . htmlspecialchars($e->getMessage());
+        if ($e->getPrevious()) {
+            $errorMessage .= ' (Previous: ' . htmlspecialchars($e->getPrevious()->getMessage()) . ')';
+        }
+    }
+    
+    $_SESSION['flash_error'] = $errorMessage;
     header('Location: ../view/feature_listing.php?book_id=' . $bookId);
     exit;
 }
