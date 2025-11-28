@@ -13,7 +13,7 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'host' => getenv('DB_HOST') ?: 'localhost',
-            'port' => getenv('DB_PORT') ?: '3306',
+            'port' => getenv('DB_PORT') ?: '442',
             'database' => getenv('DB_NAME') ?: 'ecommerce_2025A_maame_afranie',
             'username' => getenv('DB_USER') ?: 'maame.afranie',
             'password' => getenv('DB_PASS') ?: 'AshesiServer@26',
