@@ -12,11 +12,11 @@ return [
     'connections' => [
         'mysql' => [
             'driver' => 'mysql',
-            'host' => getenv('DB_HOST') ?: 'localhost',
-            'port' => getenv('DB_PORT') ?: '442',
-            'database' => getenv('DB_NAME') ?: 'ecommerce_2025A_maame_afranie',
-            'username' => getenv('DB_USER') ?: 'maame.afranie',
-            'password' => getenv('DB_PASS') ?: 'AshesiServer@26',
+            'host' => 'localhost',
+            'port' => '442',
+            'database' => 'ecommerce_2025A_maame_afranie',
+            'username' => 'maame.afranie',
+            'password' => 'AshesiServer@26',
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
