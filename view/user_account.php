@@ -306,7 +306,7 @@ error_reporting(E_ALL);
                                         <?= nl2br(htmlspecialchars($msg['admin_response'])) ?>
                                     </p>
                                     <p style="margin-top: 8px; font-size: 12px; color: #666;">
-                                        Responded on <?= date('F d, Y \a\t g:i A', strtotime($msg['responded_at'])) ?>
+                                        Responded on <?= $msg['responded_at'] ? date('F d, Y \a\t g:i A', strtotime($msg['responded_at'])) : 'N/A' ?>
                                         <?php if ($msg['responded_by_name']): ?>
                                             by <?= htmlspecialchars($msg['responded_by_name']) ?>
                                         <?php endif; ?>
@@ -315,7 +315,7 @@ error_reporting(E_ALL);
                             <?php endif; ?>
 
                             <p style="margin-top: 12px; font-size: 12px; color: #999;">
-                                Sent on <?= date('F d, Y \a\t g:i A', strtotime($msg['created_at'])) ?>
+                                Sent on <?= $msg['created_at'] ? date('F d, Y \a\t g:i A', strtotime($msg['created_at'])) : 'N/A' ?>
                             </p>
                         </div>
                     <?php endforeach; ?>

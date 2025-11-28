@@ -172,7 +172,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             <tbody>
                                 <?php foreach ($messages as $msg): ?>
                                     <tr>
-                                        <td><?= date('M d, Y', strtotime($msg['created_at'])) ?></td>
+                                        <td><?= $msg['created_at'] ? date('M d, Y', strtotime($msg['created_at'])) : 'N/A' ?></td>
                                         <td>
                                             <?= htmlspecialchars($msg['name']) ?>
                                             <?php if ($msg['username']): ?>

@@ -1,4 +1,5 @@
-<?phpini_set('display_errors',1);
+<?php
+ini_set('display_errors',1);
 ini_set('display_startup_errors',1);
 error_reporting(E_ALL);
 
@@ -109,7 +110,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                         <?php endif; ?>
                         <div class="message-meta-item">
                             <label>Received</label>
-                            <span><?= date('F d, Y \a\t g:i A', strtotime($message['created_at'])) ?></span>
+                            <span><?= $message['created_at'] ? date('F d, Y \a\t g:i A', strtotime($message['created_at'])) : 'N/A' ?></span>
                         </div>
                     </div>
                 </div>
@@ -127,7 +128,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                         <div class="admin-response-display">
                             <p><?= nl2br(htmlspecialchars($message['admin_response'])) ?></p>
                             <div class="admin-response-meta">
-                                Responded on <?= date('F d, Y \a\t g:i A', strtotime($message['responded_at'])) ?>
+                                Responded on <?= $message['responded_at'] ? date('F d, Y \a\t g:i A', strtotime($message['responded_at'])) : 'N/A' ?>
                                 by <?= htmlspecialchars($message['responded_by_name'] ?? 'Admin') ?>
                             </div>
                         </div>
