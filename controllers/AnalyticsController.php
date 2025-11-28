@@ -73,7 +73,7 @@ class AnalyticsController
                         SUM(total_amount) AS total_revenue,
                         SUM(seller_amount) AS total_earnings,
                         SUM(commission_amount) AS total_commission
-                 FROM transactions
+                 FROM fp_transactions
                  WHERE seller_id = :id AND payment_status = 'completed'";
         $revenue = $db->fetch($sql1, ['id' => $sellerId]);
 
@@ -81,17 +81,17 @@ class AnalyticsController
         $sql2 = "SELECT COUNT(*) AS total_books,
                         SUM(views_count) AS total_views,
                         SUM(available_quantity) AS total_available
-                 FROM books
+                 FROM fp_books
                  WHERE seller_id = :id";
         $books = $db->fetch($sql2, ['id' => $sellerId]);
 
         // Active listings
-        $sql3 = "SELECT COUNT(*) AS active_books FROM books WHERE seller_id = :id AND status = 'active'";
+        $sql3 = "SELECT COUNT(*) AS active_books FROM fp_books WHERE seller_id = :id AND status = 'active'";
         $active = $db->fetch($sql3, ['id' => $sellerId]);
 
         // Average rating
         $sql4 = "SELECT AVG(b.average_rating) AS avg_rating
-                 FROM books b
+                 FROM fp_books b
                  WHERE b.seller_id = :id AND b.average_rating > 0";
         $rating = $db->fetch($sql4, ['id' => $sellerId]);
 
@@ -115,7 +115,7 @@ class AnalyticsController
         $sql = "SELECT DATE(created_at) AS sale_date,
                        COUNT(*) AS total_sales,
                        SUM(total_amount) AS revenue
-                FROM transactions
+                FROM fp_transactions
                 WHERE seller_id = :id
                   AND payment_status = 'completed'
                   AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
@@ -133,8 +133,8 @@ class AnalyticsController
                        COUNT(t.transaction_id) AS total_sales,
                        SUM(t.quantity) AS units_sold,
                        SUM(t.seller_amount) AS earnings
-                FROM books b
-                LEFT JOIN transactions t ON b.book_id = t.book_id AND t.payment_status = 'completed'
+                FROM fp_books b
+                LEFT JOIN fp_transactions t ON b.book_id = t.book_id AND t.payment_status = 'completed'
                 WHERE b.seller_id = :id
                 GROUP BY b.book_id
                 ORDER BY total_sales DESC, units_sold DESC
@@ -148,9 +148,9 @@ class AnalyticsController
         $db = $this->book->db;
 
         $sql = "SELECT t.*, b.title AS book_title, u.username AS buyer_username
-                FROM transactions t
-                INNER JOIN books b ON t.book_id = b.book_id
-                INNER JOIN users u ON t.buyer_id = u.user_id
+                FROM fp_transactions t
+                INNER JOIN fp_books b ON t.book_id = b.book_id
+                INNER JOIN fp_users u ON t.buyer_id = u.user_id
                 WHERE t.seller_id = :id
                 ORDER BY t.created_at DESC
                 LIMIT {$limit}";
@@ -166,9 +166,9 @@ class AnalyticsController
                        COUNT(b.book_id) AS book_count,
                        SUM(b.views_count) AS total_views,
                        COUNT(t.transaction_id) AS total_sales
-                FROM books b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                LEFT JOIN transactions t ON b.book_id = t.book_id AND t.payment_status = 'completed'
+                FROM fp_books b
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                LEFT JOIN fp_transactions t ON b.book_id = t.book_id AND t.payment_status = 'completed'
                 WHERE b.seller_id = :id
                 GROUP BY c.category_id
                 ORDER BY total_sales DESC, book_count DESC";

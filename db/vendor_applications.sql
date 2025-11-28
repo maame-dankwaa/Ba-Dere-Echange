@@ -1,7 +1,7 @@
 -- Vendor Applications Table
 -- Stores applications from customers who want to become vendors
 
-CREATE TABLE IF NOT EXISTS vendor_applications (
+CREATE TABLE IF NOT EXISTS fp_vendor_applications (
     application_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     business_name VARCHAR(255),
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS vendor_applications (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES fp_users(user_id) ON DELETE SET NULL,
 
     INDEX idx_user_id (user_id),
     INDEX idx_status (status),

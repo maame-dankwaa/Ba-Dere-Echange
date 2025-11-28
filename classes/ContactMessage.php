@@ -5,7 +5,7 @@ require_once __DIR__ . '/Database.php';
 class ContactMessage
 {
     protected $db;
-    protected $table = 'contact_messages';
+    protected $table = 'fp_contact_messages';
 
     public function __construct()
     {
@@ -37,7 +37,7 @@ class ContactMessage
     {
         $sql = "SELECT cm.*, u.username, u.email as user_email
                 FROM {$this->table} cm
-                LEFT JOIN users u ON cm.user_id = u.user_id";
+                LEFT JOIN fp_users u ON cm.user_id = u.user_id";
 
         $params = [];
 
@@ -58,7 +58,7 @@ class ContactMessage
     {
         $sql = "SELECT cm.*, a.username as responded_by_name
                 FROM {$this->table} cm
-                LEFT JOIN users a ON cm.responded_by = a.user_id
+                LEFT JOIN fp_users a ON cm.responded_by = a.user_id
                 WHERE cm.user_id = :user_id
                 ORDER BY cm.created_at DESC
                 LIMIT {$limit}";
@@ -74,8 +74,8 @@ class ContactMessage
         $sql = "SELECT cm.*, u.username, u.email as user_email,
                        a.username as responded_by_name
                 FROM {$this->table} cm
-                LEFT JOIN users u ON cm.user_id = u.user_id
-                LEFT JOIN users a ON cm.responded_by = a.user_id
+                LEFT JOIN fp_users u ON cm.user_id = u.user_id
+                LEFT JOIN fp_users a ON cm.responded_by = a.user_id
                 WHERE cm.message_id = :id";
 
         $result = $this->db->fetch($sql, ['id' => $id]);

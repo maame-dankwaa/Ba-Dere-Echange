@@ -5,7 +5,7 @@ require_once __DIR__ . '/Database.php';
 class Category
 {
     protected $db;
-    protected $table = 'categories';
+    protected $table = 'fp_categories';
 
     public function __construct()
     {
@@ -24,7 +24,7 @@ class Category
     {
         $sql = "SELECT c.*, COUNT(b.book_id) AS book_count
                 FROM {$this->table} c
-                INNER JOIN books b ON c.category_id = b.category_id
+                INNER JOIN fp_books b ON c.category_id = b.category_id
                 WHERE c.is_active = 1 AND b.status = 'active'
                 GROUP BY c.category_id
                 ORDER BY book_count DESC

@@ -5,7 +5,7 @@ require_once __DIR__ . '/Database.php';
 class VendorApplication
 {
     protected $db;
-    protected $table = 'vendor_applications';
+    protected $table = 'fp_vendor_applications';
     protected $primaryKey = 'application_id';
 
     public function __construct()
@@ -41,8 +41,8 @@ class VendorApplication
                        u.username, u.email, u.user_role,
                        admin.username as reviewer_username
                 FROM {$this->table} a
-                INNER JOIN users u ON a.user_id = u.user_id
-                LEFT JOIN users admin ON a.reviewed_by = admin.user_id
+                INNER JOIN fp_users u ON a.user_id = u.user_id
+                LEFT JOIN fp_users admin ON a.reviewed_by = admin.user_id
                 WHERE a.{$this->primaryKey} = :id
                 LIMIT 1";
         return $this->db->fetch($sql, ['id' => $id]);
@@ -92,7 +92,7 @@ class VendorApplication
         $sql = "SELECT a.*,
                        u.username, u.email, u.phone as user_phone, u.location
                 FROM {$this->table} a
-                INNER JOIN users u ON a.user_id = u.user_id
+                INNER JOIN fp_users u ON a.user_id = u.user_id
                 WHERE a.status = :status
                 ORDER BY a.created_at DESC
                 LIMIT {$limit}";
@@ -116,8 +116,8 @@ class VendorApplication
                        u.username, u.email, u.phone as user_phone, u.location,
                        admin.username as reviewer_username
                 FROM {$this->table} a
-                INNER JOIN users u ON a.user_id = u.user_id
-                LEFT JOIN users admin ON a.reviewed_by = admin.user_id
+                INNER JOIN fp_users u ON a.user_id = u.user_id
+                LEFT JOIN fp_users admin ON a.reviewed_by = admin.user_id
                 ORDER BY
                     CASE a.status
                         WHEN 'pending' THEN 1
@@ -162,7 +162,7 @@ class VendorApplication
 
             // Promote user to vendor
             $userUpdated = $this->db->update(
-                'users',
+                'fp_users',
                 ['user_role' => 'vendor'],
                 "user_id = :id",
                 ['id' => $application['user_id']]

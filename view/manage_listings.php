@@ -28,25 +28,25 @@ $userId = (int)($_SESSION['user_id'] ?? 0);
 $sql = "SELECT b.*, c.name AS category_name,
                COUNT(DISTINCT t.transaction_id) AS total_sales,
                SUM(CASE WHEN t.payment_status = 'completed' THEN t.quantity ELSE 0 END) AS sold_quantity
-        FROM books b
-        LEFT JOIN categories c ON b.category_id = c.category_id
-        LEFT JOIN transactions t ON b.book_id = t.book_id AND t.payment_status = 'completed'
+        FROM fp_books b
+        LEFT JOIN fp_categories c ON b.category_id = c.category_id
+        LEFT JOIN fp_transactions t ON b.book_id = t.book_id AND t.payment_status = 'completed'
         WHERE b.seller_id = :seller_id
         GROUP BY b.book_id
         ORDER BY b.created_at DESC";
 $listings = $db->fetchAll($sql, ['seller_id' => $userId]);
 
 // Get statistics
-$sql1 = "SELECT COUNT(*) AS total FROM books WHERE seller_id = :id AND status = 'active'";
+$sql1 = "SELECT COUNT(*) AS total FROM fp_books WHERE seller_id = :id AND status = 'active'";
 $activeListings = $db->fetch($sql1, ['id' => $userId]);
 
-$sql2 = "SELECT SUM(views_count) AS total_views FROM books WHERE seller_id = :id";
+$sql2 = "SELECT SUM(views_count) AS total_views FROM fp_books WHERE seller_id = :id";
 $viewsData = $db->fetch($sql2, ['id' => $userId]);
 
 $sql3 = "SELECT COUNT(*) AS total_sold,
                 SUM(total_amount) AS total_revenue,
                 SUM(seller_amount) AS total_earnings
-         FROM transactions
+         FROM fp_transactions
          WHERE seller_id = :id AND payment_status = 'completed'";
 $salesData = $db->fetch($sql3, ['id' => $userId]);
 

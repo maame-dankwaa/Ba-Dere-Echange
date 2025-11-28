@@ -7,7 +7,7 @@ require_once __DIR__ . '/Book.php';
 class Review
 {
     protected $db;
-    protected $table = 'reviews';
+    protected $table = 'fp_reviews';
 
     public function __construct()
     {
@@ -38,7 +38,7 @@ class Review
     {
         $sql = "SELECT r.*, r.review_text AS comment, u.username AS reviewer_username, u.profile_image
                 FROM {$this->table} r
-                INNER JOIN users u ON r.reviewer_id = u.user_id
+                INNER JOIN fp_users u ON r.reviewer_id = u.user_id
                 WHERE r.book_id = :book_id
                 ORDER BY r.created_at DESC";
 
@@ -68,7 +68,7 @@ class Review
     {
         $stats = $this->getBookRating($bookId);
 
-        $sql = "UPDATE books 
+        $sql = "UPDATE fp_books
                 SET average_rating = :avg_rating,
                     total_ratings  = :total_reviews
                 WHERE book_id = :book_id";

@@ -23,7 +23,7 @@ if ($bookId <= 0) {
 
 try {
     $db = Database::getInstance();
-    $sql = "SELECT wishlist_id FROM wishlists
+    $sql = "SELECT wishlist_id FROM fp_wishlists
             WHERE user_id = :user_id AND book_id = :book_id
             LIMIT 1";
 

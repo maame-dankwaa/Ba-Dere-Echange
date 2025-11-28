@@ -11,7 +11,7 @@ require_once __DIR__ . '/../config/Config.php';
 class Transaction
 {
     protected Database $db;
-    protected string $table = 'transactions';
+    protected string $table = 'fp_transactions';
 
     public function __construct()
     {
@@ -135,9 +135,9 @@ class Transaction
                        u2.username AS seller_username,
                        u2.email AS seller_email
                 FROM {$this->table} t
-                INNER JOIN books b ON t.book_id = b.book_id
-                INNER JOIN users u1 ON t.buyer_id = u1.user_id
-                INNER JOIN users u2 ON t.seller_id = u2.user_id
+                INNER JOIN fp_books b ON t.book_id = b.book_id
+                INNER JOIN fp_users u1 ON t.buyer_id = u1.user_id
+                INNER JOIN fp_users u2 ON t.seller_id = u2.user_id
                 WHERE t.transaction_id = :id";
 
         $row = $this->db->fetch($sql, ['id' => $id]);
@@ -179,9 +179,9 @@ class Transaction
                        u1.username AS buyer_username,
                        u2.username AS seller_username
                 FROM {$this->table} t
-                INNER JOIN books b ON t.book_id = b.book_id
-                INNER JOIN users u1 ON t.buyer_id = u1.user_id
-                INNER JOIN users u2 ON t.seller_id = u2.user_id
+                INNER JOIN fp_books b ON t.book_id = b.book_id
+                INNER JOIN fp_users u1 ON t.buyer_id = u1.user_id
+                INNER JOIN fp_users u2 ON t.seller_id = u2.user_id
                 WHERE t.buyer_id = :id OR t.seller_id = :id
                 ORDER BY t.created_at DESC
                 LIMIT {$limit} OFFSET {$offset}";
@@ -204,8 +204,8 @@ class Transaction
                        b.cover_image AS book_image,
                        u.username AS seller_username
                 FROM {$this->table} t
-                INNER JOIN books b ON t.book_id = b.book_id
-                INNER JOIN users u ON t.seller_id = u.user_id
+                INNER JOIN fp_books b ON t.book_id = b.book_id
+                INNER JOIN fp_users u ON t.seller_id = u.user_id
                 WHERE t.buyer_id = :id
                 ORDER BY t.created_at DESC
                 LIMIT {$limit}";
@@ -228,8 +228,8 @@ class Transaction
                        b.cover_image AS book_image,
                        u.username AS buyer_username
                 FROM {$this->table} t
-                INNER JOIN books b ON t.book_id = b.book_id
-                INNER JOIN users u ON t.buyer_id = u.user_id
+                INNER JOIN fp_books b ON t.book_id = b.book_id
+                INNER JOIN fp_users u ON t.buyer_id = u.user_id
                 WHERE t.seller_id = :id
                 ORDER BY t.created_at DESC
                 LIMIT {$limit}";

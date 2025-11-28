@@ -6,7 +6,7 @@ class Book
 {
     /** @var Database */
     protected $db;
-    protected $table = 'books';
+    protected $table = 'fp_books';
 
     public function __construct()
     {
@@ -22,13 +22,13 @@ class Book
 
     public function getBookDetails(int $id): ?array
     {
-        $sql = "SELECT b.*, 
+        $sql = "SELECT b.*,
                        c.name AS category_name,
                        u.username AS seller_username,
                        u.location AS seller_location
                 FROM {$this->table} b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                INNER JOIN users u ON b.seller_id = u.user_id
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                INNER JOIN fp_users u ON b.seller_id = u.user_id
                 WHERE b.book_id = :id";
 
         $book = $this->db->fetch($sql, ['id' => $id]);
@@ -37,13 +37,13 @@ class Book
 
     public function getBooksWithFilters(array $filters, int $page = 1, int $perPage = 20): array
     {
-        $sql = "SELECT b.*, 
+        $sql = "SELECT b.*,
                        c.name AS category_name,
                        u.username AS seller_username,
                        u.location AS seller_location
                 FROM {$this->table} b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                INNER JOIN users u ON b.seller_id = u.user_id
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                INNER JOIN fp_users u ON b.seller_id = u.user_id
                 WHERE b.status = 'active'";
 
         $params = [];
@@ -125,8 +125,8 @@ class Book
 
         $sql = "SELECT b.*, c.name AS category_name, u.username AS seller_username
                 FROM {$this->table} b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                INNER JOIN users u ON b.seller_id = u.user_id
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                INNER JOIN fp_users u ON b.seller_id = u.user_id
                 WHERE b.status = 'active'
                   AND (b.title LIKE :q1 OR b.author LIKE :q2 OR b.description LIKE :q3)
                 ORDER BY b.created_at DESC
@@ -143,8 +143,8 @@ class Book
     {
         $sql = "SELECT b.*, c.name AS category_name, u.username AS seller_username
                 FROM {$this->table} b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                INNER JOIN users u ON b.seller_id = u.user_id
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                INNER JOIN fp_users u ON b.seller_id = u.user_id
                 WHERE b.status = 'active' AND b.is_featured = 1
                 ORDER BY b.featured_until DESC, b.created_at DESC
                 LIMIT {$limit}";
@@ -157,9 +157,9 @@ class Book
         $sql = "SELECT b.*, c.name AS category_name, u.username AS seller_username,
                        COUNT(t.transaction_id) AS recent_sales
                 FROM {$this->table} b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                INNER JOIN users u ON b.seller_id = u.user_id
-                LEFT JOIN transactions t
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                INNER JOIN fp_users u ON b.seller_id = u.user_id
+                LEFT JOIN fp_transactions t
                     ON t.book_id = b.book_id
                    AND t.payment_status = 'completed'
                    AND t.created_at >= (NOW() - INTERVAL :days DAY)
@@ -174,8 +174,8 @@ class Book
     {
         $sql = "SELECT b.*, c.name AS category_name, u.username AS seller_username, u.location AS seller_location
                 FROM {$this->table} b
-                INNER JOIN categories c ON b.category_id = c.category_id
-                INNER JOIN users u ON b.seller_id = u.user_id
+                INNER JOIN fp_categories c ON b.category_id = c.category_id
+                INNER JOIN fp_users u ON b.seller_id = u.user_id
                 WHERE b.status = 'active'
                 ORDER BY b.created_at DESC
                 LIMIT {$limit}";

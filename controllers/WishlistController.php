@@ -140,7 +140,7 @@ class WishlistController
 
         try {
             $db->query(
-                "INSERT IGNORE INTO wishlists (user_id, book_id, created_at)
+                "INSERT IGNORE INTO fp_wishlists (user_id, book_id, created_at)
                  VALUES (:user_id, :book_id, NOW())",
                 [
                     'user_id' => $userId,
@@ -170,7 +170,7 @@ class WishlistController
 
             try {
                 $db->query(
-                    "DELETE FROM wishlists WHERE user_id = :user_id AND book_id = :book_id",
+                    "DELETE FROM fp_wishlists WHERE user_id = :user_id AND book_id = :book_id",
                     [
                         'user_id' => $userId,
                         'book_id' => $bookId,
@@ -205,7 +205,7 @@ class WishlistController
 
         $db = Database::getInstance();
         $result = $db->fetch(
-            "SELECT 1 FROM wishlists WHERE user_id = :user_id AND book_id = :book_id",
+            "SELECT 1 FROM fp_wishlists WHERE user_id = :user_id AND book_id = :book_id",
             ['user_id' => $userId, 'book_id' => $bookId]
         );
 

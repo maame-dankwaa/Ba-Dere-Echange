@@ -1,0 +1,48 @@
+# Environment Variables for Production
+# IMPORTANT: Rename this file to .htaccess and update with your actual credentials
+# This file should NOT be committed to git (add .htaccess to .gitignore if using real credentials)
+
+# Database Configuration
+SetEnv DB_HOST "localhost"
+SetEnv DB_PORT "3306"
+SetEnv DB_NAME "ecommerce_2025A_maame_afranie"
+SetEnv DB_USER "your_username"
+SetEnv DB_PASS "your_password"
+
+# Application Settings
+SetEnv APP_ENV "production"
+SetEnv APP_DEBUG "false"
+SetEnv APP_URL "https://yoursite.com"
+
+# Database Query Logging
+SetEnv DB_LOG_QUERIES "false"
+
+# PHP Settings (optional but recommended)
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300
+php_value memory_limit 256M
+
+# Security Headers (optional but recommended)
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Error Pages (optional)
+ErrorDocument 404 /view/error.php
+ErrorDocument 500 /view/error.php
+
+# Deny access to sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect sensitive directories
+<DirectoryMatch "^/(config|classes|helpers|services|migrations)">
+    Order allow,deny
+    Deny from all
+</DirectoryMatch>

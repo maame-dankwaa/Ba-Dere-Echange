@@ -8,7 +8,7 @@ COLLATE utf8mb4_unicode_ci;
 USE ba_dere_exchange;
 
 -- Users Table
-CREATE TABLE users (
+CREATE TABLE fp_users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE users (
 ) ENGINE=InnoDB;
 
 -- Categories Table
-CREATE TABLE categories (
+CREATE TABLE fp_categories (
     category_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
     slug VARCHAR(50) UNIQUE NOT NULL,
@@ -72,12 +72,12 @@ CREATE TABLE categories (
     parent_id INT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (parent_id) REFERENCES categories(category_id) ON DELETE SET NULL,
+    FOREIGN KEY (parent_id) REFERENCES fp_categories(category_id) ON DELETE SET NULL,
     INDEX idx_slug (slug)
 ) ENGINE=InnoDB;
 
 -- Books Table
-CREATE TABLE books (
+CREATE TABLE fp_books (
     book_id INT PRIMARY KEY AUTO_INCREMENT,
     seller_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -109,8 +109,8 @@ CREATE TABLE books (
     featured_until DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (seller_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+    FOREIGN KEY (seller_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES fp_categories(category_id),
     INDEX idx_title (title),
     INDEX idx_author (author),
     INDEX idx_category (category_id),
@@ -121,7 +121,7 @@ CREATE TABLE books (
 ) ENGINE=InnoDB;
 
 -- Activity Log Table
-CREATE TABLE activity_log (
+CREATE TABLE fp_activity_log (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NULL,
     action_type VARCHAR(50) NOT NULL,
@@ -131,13 +131,13 @@ CREATE TABLE activity_log (
     ip_address VARCHAR(45),
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES fp_users(user_id) ON DELETE SET NULL,
     INDEX idx_user (user_id),
     INDEX idx_action (action_type),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB;
 -- Transactions Table
-CREATE TABLE transactions (
+CREATE TABLE fp_transactions (
     transaction_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_code VARCHAR(50) UNIQUE NOT NULL,
     buyer_id INT NOT NULL,
@@ -161,9 +161,9 @@ CREATE TABLE transactions (
     completed_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (buyer_id) REFERENCES users(user_id),
-    FOREIGN KEY (seller_id) REFERENCES users(user_id),
-    FOREIGN KEY (book_id) REFERENCES books(book_id),
+    FOREIGN KEY (buyer_id) REFERENCES fp_users(user_id),
+    FOREIGN KEY (seller_id) REFERENCES fp_users(user_id),
+    FOREIGN KEY (book_id) REFERENCES fp_books(book_id),
     INDEX idx_buyer (buyer_id),
     INDEX idx_seller (seller_id),
     INDEX idx_transaction_code (transaction_code),
@@ -172,7 +172,7 @@ CREATE TABLE transactions (
 ) ENGINE=InnoDB;
 
 -- Rentals Table
-CREATE TABLE rentals (
+CREATE TABLE fp_rentals (
     rental_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_id INT NOT NULL,
     book_id INT NOT NULL,
@@ -193,17 +193,17 @@ CREATE TABLE rentals (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
-    FOREIGN KEY (book_id) REFERENCES books(book_id),
-    FOREIGN KEY (renter_id) REFERENCES users(user_id),
-    FOREIGN KEY (owner_id) REFERENCES users(user_id),
+    FOREIGN KEY (transaction_id) REFERENCES fp_transactions(transaction_id),
+    FOREIGN KEY (book_id) REFERENCES fp_books(book_id),
+    FOREIGN KEY (renter_id) REFERENCES fp_users(user_id),
+    FOREIGN KEY (owner_id) REFERENCES fp_users(user_id),
     INDEX idx_renter (renter_id),
     INDEX idx_status (rental_status),
     INDEX idx_dates (rental_start_date, rental_end_date)
 ) ENGINE=InnoDB;
 
 -- Reviews Table
-CREATE TABLE reviews (
+CREATE TABLE fp_reviews (
     review_id INT PRIMARY KEY AUTO_INCREMENT,
     book_id INT NOT NULL,
     reviewer_id INT NOT NULL,
@@ -216,30 +216,30 @@ CREATE TABLE reviews (
     responded_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewer_id) REFERENCES users(user_id),
-    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
+    FOREIGN KEY (book_id) REFERENCES fp_books(book_id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewer_id) REFERENCES fp_users(user_id),
+    FOREIGN KEY (transaction_id) REFERENCES fp_transactions(transaction_id),
     INDEX idx_book (book_id),
     INDEX idx_reviewer (reviewer_id),
     INDEX idx_rating (rating)
 ) ENGINE=InnoDB;
 
 -- Wishlists Table
-CREATE TABLE wishlists (
+CREATE TABLE fp_wishlists (
     wishlist_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
     notify_on_availability BOOLEAN DEFAULT FALSE,
     notify_on_price_drop BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES fp_books(book_id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_book (user_id, book_id),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB;
 
 -- Messages Table
-CREATE TABLE messages (
+CREATE TABLE fp_messages (
     message_id INT PRIMARY KEY AUTO_INCREMENT,
     sender_id INT NOT NULL,
     recipient_id INT NOT NULL,
@@ -250,17 +250,17 @@ CREATE TABLE messages (
     read_at DATETIME,
     parent_message_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(user_id),
-    FOREIGN KEY (recipient_id) REFERENCES users(user_id),
-    FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE SET NULL,
-    FOREIGN KEY (parent_message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES fp_users(user_id),
+    FOREIGN KEY (recipient_id) REFERENCES fp_users(user_id),
+    FOREIGN KEY (book_id) REFERENCES fp_books(book_id) ON DELETE SET NULL,
+    FOREIGN KEY (parent_message_id) REFERENCES fp_messages(message_id) ON DELETE CASCADE,
     INDEX idx_recipient (recipient_id),
     INDEX idx_sender (sender_id),
     INDEX idx_read (is_read)
 ) ENGINE=InnoDB;
 
 -- Featured Listings Table
-CREATE TABLE featured_listings (
+CREATE TABLE fp_featured_listings (
     featured_id INT PRIMARY KEY AUTO_INCREMENT,
     book_id INT NOT NULL,
     seller_id INT NOT NULL,
@@ -272,14 +272,14 @@ CREATE TABLE featured_listings (
     clicks INT DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE,
-    FOREIGN KEY (seller_id) REFERENCES users(user_id),
+    FOREIGN KEY (book_id) REFERENCES fp_books(book_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES fp_users(user_id),
     INDEX idx_active (is_active, end_date),
     INDEX idx_book (book_id)
 ) ENGINE=InnoDB;
 
 -- Vendor Applications Table
-CREATE TABLE vendor_applications (
+CREATE TABLE fp_vendor_applications (
     application_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     institution_name VARCHAR(200) NOT NULL,
@@ -299,14 +299,14 @@ CREATE TABLE vendor_applications (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES fp_users(user_id) ON DELETE SET NULL,
     INDEX idx_status (application_status),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB;
 
 -- Admin Actions Log Table
-CREATE TABLE admin_actions (
+CREATE TABLE fp_admin_actions (
     action_id INT PRIMARY KEY AUTO_INCREMENT,
     admin_id INT NOT NULL,
     action_type ENUM('user_suspend', 'user_activate', 'vendor_approve', 'vendor_reject', 
@@ -318,7 +318,7 @@ CREATE TABLE admin_actions (
     new_state TEXT, -- JSON of new values
     ip_address VARCHAR(45),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
     INDEX idx_admin (admin_id),
     INDEX idx_action_type (action_type),
     INDEX idx_target (target_type, target_id),
@@ -326,7 +326,7 @@ CREATE TABLE admin_actions (
 ) ENGINE=InnoDB;
 
 -- Vendor Payouts Table
-CREATE TABLE vendor_payouts (
+CREATE TABLE fp_vendor_payouts (
     payout_id INT PRIMARY KEY AUTO_INCREMENT,
     vendor_id INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
@@ -340,14 +340,14 @@ CREATE TABLE vendor_payouts (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (processed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (vendor_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (processed_by) REFERENCES fp_users(user_id) ON DELETE SET NULL,
     INDEX idx_vendor (vendor_id),
     INDEX idx_status (payout_status)
 ) ENGINE=InnoDB;
 
 -- Notifications Table
-CREATE TABLE notifications (
+CREATE TABLE fp_notifications (
     notification_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     type VARCHAR(50) NOT NULL,
@@ -357,14 +357,14 @@ CREATE TABLE notifications (
     is_read BOOLEAN DEFAULT FALSE,
     read_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES fp_users(user_id) ON DELETE CASCADE,
     INDEX idx_user (user_id),
     INDEX idx_read (is_read),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB;
 
 -- Insert default categories
-INSERT INTO categories (name, slug, description, icon, parent_id) VALUES
+INSERT INTO fp_categories (name, slug, description, icon, parent_id) VALUES
 ('Academic', 'academic', 'Academic books and textbooks', 'academic-icon.svg', NULL),
 ('Fiction', 'fiction', 'Fictional books and novels', 'fiction-icon.svg', NULL),
 ('Non-Fiction', 'non-fiction', 'Non-fictional books', 'nonfiction-icon.svg', NULL),
@@ -375,5 +375,5 @@ INSERT INTO categories (name, slug, description, icon, parent_id) VALUES
 ('Self-Help', 'self-help', 'Self-help and personal development', 'selfhelp-icon.svg', 3);
 
 -- Insert default admin user (password: Admin@123456)
-INSERT INTO users (username, email, password_hash, full_name, user_role, admin_level, email_verified, is_active) VALUES
+INSERT INTO fp_users (username, email, password_hash, full_name, user_role, admin_level, email_verified, is_active) VALUES
 ('admin', 'admin@badereexchange.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', 'admin', 'super_admin', TRUE, TRUE);

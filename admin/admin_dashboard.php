@@ -25,16 +25,16 @@
     $db = Database::getInstance();
 
     // Get real statistics
-    $userCountResult = $db->fetch("SELECT COUNT(*) as total FROM users", []);
+    $userCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_users", []);
     $totalUsers = $userCountResult['total'] ?? 0;
 
-    $bookCountResult = $db->fetch("SELECT COUNT(*) as total FROM books", []);
+    $bookCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_books", []);
     $totalBooks = $bookCountResult['total'] ?? 0;
 
-    $transactionCountResult = $db->fetch("SELECT COUNT(*) as total FROM transactions", []);
+    $transactionCountResult = $db->fetch("SELECT COUNT(*) as total FROM fp_transactions", []);
     $totalTransactions = $transactionCountResult['total'] ?? 0;
 
-    $pendingListingsResult = $db->fetch("SELECT COUNT(*) as total FROM books WHERE status = 'pending'", []);
+    $pendingListingsResult = $db->fetch("SELECT COUNT(*) as total FROM fp_books WHERE status = 'pending'", []);
     $pendingListings = $pendingListingsResult['total'] ?? 0;
 
     // Get vendor application stats
@@ -52,10 +52,10 @@
             b.title as book_title,
             buyer.username as buyer_username,
             seller.username as seller_username
-        FROM transactions t
-        JOIN books b ON t.book_id = b.book_id
-        JOIN users buyer ON t.buyer_id = buyer.user_id
-        JOIN users seller ON t.seller_id = seller.user_id
+        FROM fp_transactions t
+        JOIN fp_books b ON t.book_id = b.book_id
+        JOIN fp_users buyer ON t.buyer_id = buyer.user_id
+        JOIN fp_users seller ON t.seller_id = seller.user_id
         ORDER BY t.created_at DESC
         LIMIT 10
     ", []);

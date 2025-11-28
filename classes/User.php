@@ -5,7 +5,7 @@ require_once __DIR__ . '/Database.php';
 class User
 {
     protected $db;
-    protected $table = 'users';
+    protected $table = 'fp_users';
     protected $primaryKey = 'user_id';
 
     public function __construct()
@@ -121,8 +121,8 @@ class User
     public function getWishlist(int $userId): array
     {
         $sql = "SELECT w.*, b.*
-                FROM wishlists w
-                INNER JOIN books b ON w.book_id = b.book_id
+                FROM fp_wishlists w
+                INNER JOIN fp_books b ON w.book_id = b.book_id
                 WHERE w.user_id = :user_id
                 ORDER BY w.created_at DESC";
         return $this->db->fetchAll($sql, ['user_id' => $userId]);
@@ -132,9 +132,9 @@ class User
     {
         try {
             $sql = "SELECT
-                    (SELECT COUNT(*) FROM transactions t WHERE t.buyer_id = :id) AS total_purchases,
-                    (SELECT COUNT(*) FROM transactions t WHERE t.seller_id = :id) AS total_sales,
-                    (SELECT COUNT(*) FROM wishlists w WHERE w.user_id = :id) AS wishlist_items";
+                    (SELECT COUNT(*) FROM fp_transactions t WHERE t.buyer_id = :id) AS total_purchases,
+                    (SELECT COUNT(*) FROM fp_transactions t WHERE t.seller_id = :id) AS total_sales,
+                    (SELECT COUNT(*) FROM fp_wishlists w WHERE w.user_id = :id) AS wishlist_items";
             $row = $this->db->fetch($sql, ['id' => $userId]);
             return $row ?: [
                 'total_purchases' => 0,
@@ -155,8 +155,8 @@ class User
     {
         try {
             $sql = "SELECT t.*, b.title AS book_title
-                    FROM transactions t
-                    INNER JOIN books b ON t.book_id = b.book_id
+                    FROM fp_transactions t
+                    INNER JOIN fp_books b ON t.book_id = b.book_id
                     WHERE t.buyer_id = :id
                     ORDER BY t.created_at DESC
                     LIMIT {$limit}";
@@ -171,8 +171,8 @@ class User
     {
         try {
             $sql = "SELECT t.*, b.title AS book_title
-                    FROM transactions t
-                    INNER JOIN books b ON t.book_id = b.book_id
+                    FROM fp_transactions t
+                    INNER JOIN fp_books b ON t.book_id = b.book_id
                     WHERE t.seller_id = :id
                     ORDER BY t.created_at DESC
                     LIMIT {$limit}";

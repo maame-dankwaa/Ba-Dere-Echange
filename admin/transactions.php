@@ -75,10 +75,10 @@ $sql = "SELECT
             buyer.email as buyer_email,
             seller.username as seller_username,
             seller.email as seller_email
-        FROM transactions t
-        JOIN books b ON t.book_id = b.book_id
-        JOIN users buyer ON t.buyer_id = buyer.user_id
-        JOIN users seller ON t.seller_id = seller.user_id
+        FROM fp_transactions t
+        JOIN fp_books b ON t.book_id = b.book_id
+        JOIN fp_users buyer ON t.buyer_id = buyer.user_id
+        JOIN fp_users seller ON t.seller_id = seller.user_id
         WHERE 1=1";
 
 $params = [];
@@ -106,7 +106,7 @@ $sql .= " ORDER BY t.created_at DESC LIMIT " . (($page - 1) * $perPage) . ", $pe
 $transactions = $db->fetchAll($sql, $params);
 
 // Get total count for pagination
-$countSql = "SELECT COUNT(*) as total FROM transactions t WHERE 1=1";
+$countSql = "SELECT COUNT(*) as total FROM fp_transactions t WHERE 1=1";
 $countParams = [];
 if ($statusFilter !== 'all') {
     $countSql .= " AND t.payment_status = :status";
@@ -263,7 +263,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             SUM(CASE WHEN payment_status = 'completed' THEN total_amount ELSE 0 END) as total_revenue,
             SUM(CASE WHEN payment_status = 'completed' THEN commission_amount ELSE 0 END) as total_commission,
             SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending_count
-        FROM transactions", []);
+        FROM fp_transactions", []);
         ?>
 
         <div class="stats-grid">

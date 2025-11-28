@@ -10,7 +10,7 @@ require_once __DIR__ . '/../services/Logger.php';
 class FeaturedListing
 {
     protected Database $db;
-    protected string $table = 'featured_listing_transactions';
+    protected string $table = 'fp_featured_listing_transactions';
 
     public function __construct()
     {
@@ -126,7 +126,7 @@ class FeaturedListing
 
         // Update the book's featured status
         $updated = $this->db->update(
-            'books',
+            'fp_books',
             [
                 'is_featured' => 1,
                 'featured_from' => $transaction['featured_from'],
@@ -156,7 +156,7 @@ class FeaturedListing
      */
     public function isFeatured(int $bookId): bool
     {
-        $sql = "SELECT is_featured, featured_until FROM books
+        $sql = "SELECT is_featured, featured_until FROM fp_books
                 WHERE book_id = :id
                 AND is_featured = 1
                 AND featured_until > NOW()";
@@ -173,7 +173,7 @@ class FeaturedListing
      */
     public function getUserFeaturedCount(int $userId): int
     {
-        $sql = "SELECT COUNT(*) as count FROM books
+        $sql = "SELECT COUNT(*) as count FROM fp_books
                 WHERE seller_id = :user_id
                 AND is_featured = 1
                 AND featured_until > NOW()";
@@ -191,7 +191,7 @@ class FeaturedListing
     public function getUserFeaturedListings(int $userId): array
     {
         $sql = "SELECT b.*, f.*
-                FROM books b
+                FROM fp_books b
                 LEFT JOIN {$this->table} f ON b.book_id = f.book_id
                 WHERE b.seller_id = :user_id
                 AND b.is_featured = 1
@@ -210,7 +210,7 @@ class FeaturedListing
     public function expireFeaturedListings(): int
     {
         $updated = $this->db->update(
-            'books',
+            'fp_books',
             ['is_featured' => 0],
             'is_featured = 1 AND featured_until <= NOW()',
             []
