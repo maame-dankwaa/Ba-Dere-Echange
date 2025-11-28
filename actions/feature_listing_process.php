@@ -1,4 +1,13 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Enable debug mode to show detailed errors
+if (!defined('SHOW_DEBUG_ERRORS')) {
+    define('SHOW_DEBUG_ERRORS', true);
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -152,17 +161,21 @@ try {
 } catch (Exception $e) {
     error_log("Featured listing payment error: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
+    error_log("File: " . $e->getFile() . " Line: " . $e->getLine());
     
-    // Show actual error in debug mode
-    $errorMessage = 'An error occurred. Please try again.';
+    // Always show the actual error message (since we're in debug mode)
+    $errorMessage = 'Error: ' . htmlspecialchars($e->getMessage());
+    if ($e->getPrevious()) {
+        $errorMessage .= ' (Previous: ' . htmlspecialchars($e->getPrevious()->getMessage()) . ')';
+    }
+    
+    // Add file and line info in debug mode
     if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
-        $errorMessage = 'Error: ' . htmlspecialchars($e->getMessage());
-        if ($e->getPrevious()) {
-            $errorMessage .= ' (Previous: ' . htmlspecialchars($e->getPrevious()->getMessage()) . ')';
-        }
+        $errorMessage .= ' [File: ' . basename($e->getFile()) . ' Line: ' . $e->getLine() . ']';
     }
     
     $_SESSION['flash_error'] = $errorMessage;
+    error_log("Setting flash error: $errorMessage");
     header('Location: ../view/feature_listing.php?book_id=' . $bookId);
     exit;
 }
