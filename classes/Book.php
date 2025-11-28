@@ -245,17 +245,40 @@ class Book
             'is_rentable'          => $data['available_rent'] ?? 0,
             'is_exchangeable'      => $data['available_exchange'] ?? 0,
             'price'                => $data['price'] ?: 0,
-            'rental_price'         => $data['rental_price'] ?: null,
-            'rental_period_unit'   => $data['rental_period_unit'] ?? null,
-            'rental_min_period'    => $data['rental_min_period'] ?? null,
-            'rental_max_period'    => $data['rental_max_period'] ?? null,
-            'exchange_duration'    => $data['exchange_duration'] ?? null,
-            'exchange_duration_unit' => $data['exchange_duration_unit'] ?? null,
             'cover_image'          => $data['cover_image'] ?? null,
             'status'               => 'active',
             'available_quantity'   => $data['available_quantity'] ?? 1,
             'views_count'          => 0,
         ];
+
+        // Add new rental/exchange fields only if columns exist in database
+        // Check if rental_price column exists (new schema)
+        try {
+            $checkColumn = $this->db->fetch("SHOW COLUMNS FROM {$this->table} LIKE 'rental_price'");
+            if ($checkColumn) {
+                // New schema - use rental_price and period fields
+                $row['rental_price'] = $data['rental_price'] ?: null;
+                $row['rental_period_unit'] = $data['rental_period_unit'] ?? null;
+                $row['rental_min_period'] = $data['rental_min_period'] ?? null;
+                $row['rental_max_period'] = $data['rental_max_period'] ?? null;
+                $row['exchange_duration'] = $data['exchange_duration'] ?? null;
+                $row['exchange_duration_unit'] = $data['exchange_duration_unit'] ?? null;
+            } else {
+                // Old schema - map to rental_price_daily/weekly/monthly
+                if (!empty($data['rental_price']) && !empty($data['rental_period_unit'])) {
+                    $unit = $data['rental_period_unit'];
+                    if ($unit === 'day') {
+                        $row['rental_price_daily'] = $data['rental_price'];
+                    } elseif ($unit === 'week') {
+                        $row['rental_price_weekly'] = $data['rental_price'];
+                    } elseif ($unit === 'month') {
+                        $row['rental_price_monthly'] = $data['rental_price'];
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // If check fails, assume old schema and skip new fields
+        }
 
         return (int)$this->db->insert($this->table, $row);
     }

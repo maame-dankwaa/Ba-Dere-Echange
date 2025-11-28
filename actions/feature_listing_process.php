@@ -85,11 +85,15 @@ try {
     }
 
     // Initialize Paystack transaction
+    error_log("Initializing Paystack payment for featured listing: amount=$amount, email=$userEmail");
+    
     $paystackResponse = paystack_initialize_transaction(
         $amount,
         $userEmail,
         'FEATURED_' . $transactionId . '_' . time()
     );
+
+    error_log("Paystack response: " . json_encode($paystackResponse));
 
     if ($paystackResponse['status'] ?? false) {
         // Store transaction reference in session
@@ -100,14 +104,26 @@ try {
         // Redirect to Paystack payment page
         $authorizationUrl = $paystackResponse['data']['authorization_url'] ?? '';
         if (!empty($authorizationUrl)) {
+            error_log("Redirecting to Paystack: $authorizationUrl");
             header('Location: ' . $authorizationUrl);
+            exit;
+        } else {
+            error_log("No authorization URL in Paystack response");
+            $_SESSION['flash_error'] = 'Payment initialization failed: No authorization URL received. Response: ' . json_encode($paystackResponse);
+            header('Location: ../view/feature_listing.php?book_id=' . $bookId);
             exit;
         }
     }
 
-    // If Paystack init fails, show error
+    // If Paystack init fails, show detailed error
     $errorMessage = $paystackResponse['message'] ?? 'Failed to initialize payment';
-    $_SESSION['flash_error'] = 'Payment initialization failed: ' . $errorMessage;
+    $errorDetails = '';
+    if (isset($paystackResponse['data']['message'])) {
+        $errorDetails = ': ' . $paystackResponse['data']['message'];
+    }
+    
+    error_log("Paystack initialization failed: $errorMessage$errorDetails");
+    $_SESSION['flash_error'] = 'Payment initialization failed: ' . $errorMessage . $errorDetails;
     header('Location: ../view/feature_listing.php?book_id=' . $bookId);
     exit;
 

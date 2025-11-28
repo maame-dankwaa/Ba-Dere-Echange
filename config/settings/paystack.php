@@ -14,7 +14,33 @@ define('PAYSTACK_INIT_ENDPOINT', PAYSTACK_API_URL . '/transaction/initialize');
 define('PAYSTACK_VERIFY_ENDPOINT', PAYSTACK_API_URL . '/transaction/verify/');
 
 define('APP_ENVIRONMENT', 'test');
-define('APP_BASE_URL', 'http://localhost/ba_dere_exchange');
+
+// Auto-detect base URL from current request
+if (!defined('APP_BASE_URL')) {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    
+    // Get the script directory path
+    $scriptPath = $_SERVER['SCRIPT_NAME'] ?? '';
+    // Remove the filename and go up to the project root
+    // If we're in config/settings/paystack.php, go up 2 levels
+    $projectPath = dirname(dirname(dirname($scriptPath)));
+    
+    // Clean up the path
+    $projectPath = str_replace('\\', '/', $projectPath);
+    $projectPath = rtrim($projectPath, '/');
+    
+    // For the server, construct the full URL
+    // http://169.239.251.102:442/~maame.afranie/final_project
+    if (strpos($host, '169.239.251.102') !== false) {
+        $baseUrl = $protocol . '://' . $host . '/~maame.afranie/final_project';
+    } else {
+        $baseUrl = $protocol . '://' . $host . $projectPath;
+    }
+    
+    define('APP_BASE_URL', $baseUrl);
+}
+
 define('PAYSTACK_CALLBACK_URL', APP_BASE_URL . '/view/paystack_callback.php'); // Callback after payment
 
 /**

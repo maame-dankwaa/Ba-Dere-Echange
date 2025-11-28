@@ -190,7 +190,9 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <div class="alert alert-success"><?= htmlspecialchars($flash['success']) ?></div>
         <?php endif; ?>
         <?php if ($flash['error']): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($flash['error']) ?></div>
+            <div class="alert alert-error" style="background-color: #fee2e2; border: 2px solid #dc3545; color: #721c24; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                <strong>⚠️ Error:</strong> <?= htmlspecialchars($flash['error']) ?>
+            </div>
         <?php endif; ?>
 
         <div class="book-preview">
