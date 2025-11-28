@@ -48,7 +48,7 @@ class User
             'bio'                => $data['bio'] ?? null,
             'location'           => $data['location'] ?? null,
             'user_role'          => $data['user_role'],
-            'account_type'       => $data['account_type'] ?? 'individual',
+            'account_type'       => $data['account_type'] ?? 'customer',
             'institution_name'   => $data['institution_name'] ?? null,
             'institution_type'   => $data['institution_type'] ?? null,
             'institution_verified' => $data['institution_verified'] ?? 0,
