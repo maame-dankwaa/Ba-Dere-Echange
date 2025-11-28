@@ -102,7 +102,9 @@ class Database
                 'error_message' => $e->getMessage(),
             ]);
 
-            throw new RuntimeException('A database error occurred. Please try again.');
+            // Surface the original PDO error message so callers can provide more context.
+            // This is helpful during active debugging (the caller decides what to show to users).
+            throw new RuntimeException('Database error: ' . $e->getMessage(), (int)$e->getCode(), $e);
         }
     }
 
