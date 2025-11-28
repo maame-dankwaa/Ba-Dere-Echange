@@ -10,6 +10,11 @@ error_reporting(E_ALL);
         session_start();
     }
 
+    // Temporary flag to surface backend errors directly in the browser
+    if (!defined('SHOW_DEBUG_ERRORS')) {
+        define('SHOW_DEBUG_ERRORS', true);
+    }
+
     require_once __DIR__ . '/../helpers/AuthHelper.php';
     require_once __DIR__ . '/../classes/User.php';
     require_once __DIR__ . '/../classes/VendorApplication.php';

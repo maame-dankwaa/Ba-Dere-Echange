@@ -102,6 +102,12 @@ class Database
                 'error_message' => $e->getMessage(),
             ]);
 
+            if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
+                echo '<pre style="color:#b91c1c;background:#fee2e2;padding:12px;border-radius:6px;">';
+                echo 'Database error: ' . htmlspecialchars($e->getMessage());
+                echo '</pre>';
+            }
+
             // Surface the original PDO error message so callers can provide more context.
             // This is helpful during active debugging (the caller decides what to show to users).
             throw new RuntimeException('Database error: ' . $e->getMessage(), (int)$e->getCode(), $e);
