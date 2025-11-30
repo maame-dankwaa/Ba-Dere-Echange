@@ -137,7 +137,8 @@ class ManageListingsController
             $_SESSION['flash_success'] = 'Listing deleted successfully.';
         } catch (Exception $e) {
             error_log('Delete listing error: ' . $e->getMessage());
-            $_SESSION['flash_error'] = 'Failed to delete listing. Please try again.';
+            error_log('Delete listing error trace: ' . $e->getTraceAsString());
+            $_SESSION['flash_error'] = 'Failed to delete listing: ' . htmlspecialchars($e->getMessage());
         }
 
         header('Location: ../view/manage_listings.php');
