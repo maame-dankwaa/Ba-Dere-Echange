@@ -1,5 +1,9 @@
 <?php
 
+ini_set('display_errors',1);
+ini_set('display_startup_errors',1);
+error_reporting(E_ALL);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -27,19 +31,31 @@ $availableEarnings = $payoutModel->getAvailableEarnings($userId);
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
+    // DEBUG: Show all POST data
+    $debugInfo = '<div style="background: #f3f4f6; padding: 20px; margin: 20px 0; border: 2px solid #dc2626; border-radius: 8px;">';
+    $debugInfo .= '<h3 style="color: #dc2626; margin-top: 0;">DEBUG INFO:</h3>';
+    $debugInfo .= '<strong>All POST data:</strong><pre>' . htmlspecialchars(print_r($_POST, true)) . '</pre>';
+    $debugInfo .= '<strong>POST keys:</strong> ' . implode(', ', array_keys($_POST)) . '<br>';
+    
     $amount = (float)($_POST['amount'] ?? 0);
     $payoutMethod = $_POST['payout_method'] ?? 'paystack';
+    
+    $debugInfo .= '<strong>Payout Method:</strong> ' . htmlspecialchars($payoutMethod) . '<br>';
+    $debugInfo .= '<strong>Amount:</strong> ' . $amount . '<br>';
+    
     $accountDetails = [];
 
     // Validate amount
     if ($amount <= 0) {
         $_SESSION['flash_error'] = 'Invalid amount.';
+        $_SESSION['debug_info'] = $debugInfo;
         header('Location: request_payout.php');
         exit;
     }
 
     if ($amount > $availableEarnings) {
         $_SESSION['flash_error'] = 'Amount exceeds available earnings.';
+        $_SESSION['debug_info'] = $debugInfo;
         header('Location: request_payout.php');
         exit;
     }
@@ -54,12 +70,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
             'account_number' => trim($_POST['account_number'] ?? ''),
             'bank_code' => trim($_POST['bank_code'] ?? ''),
         ];
+        
+        $debugInfo .= '<strong>Paystack Account Details:</strong><pre>' . htmlspecialchars(print_r($accountDetails, true)) . '</pre>';
+        $debugInfo .= '<strong>account_name value:</strong> "' . htmlspecialchars($_POST['account_name'] ?? 'NOT SET') . '"<br>';
+        $debugInfo .= '<strong>account_number value:</strong> "' . htmlspecialchars($_POST['account_number'] ?? 'NOT SET') . '"<br>';
+        $debugInfo .= '<strong>bank_code value:</strong> "' . htmlspecialchars($_POST['bank_code'] ?? 'NOT SET') . '"<br>';
     } elseif ($payoutMethod === 'mobile_money') {
         $accountDetails = [
             'phone' => trim($_POST['phone'] ?? ''),
             'network' => trim($_POST['network'] ?? ''),
             'name' => trim($_POST['name'] ?? ''),
         ];
+        $debugInfo .= '<strong>Mobile Money Account Details:</strong><pre>' . htmlspecialchars(print_r($accountDetails, true)) . '</pre>';
     } elseif ($payoutMethod === 'bank_transfer') {
         $accountDetails = [
             'account_name' => trim($_POST['account_name'] ?? ''),
@@ -67,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
             'bank_name' => trim($_POST['bank_name'] ?? ''),
             'bank_code' => trim($_POST['bank_code'] ?? ''),
         ];
+        $debugInfo .= '<strong>Bank Transfer Account Details:</strong><pre>' . htmlspecialchars(print_r($accountDetails, true)) . '</pre>';
     }
 
     // Validate required fields with detailed error messages
@@ -81,8 +104,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         if (empty($accountDetails['bank_code'])) {
             $missingFields[] = 'Bank Code / Network';
         }
+        
+        $debugInfo .= '<strong>Missing Fields Check:</strong><br>';
+        $debugInfo .= '- name empty: ' . (empty($accountDetails['name']) ? 'YES' : 'NO') . '<br>';
+        $debugInfo .= '- account_number empty: ' . (empty($accountDetails['account_number']) ? 'YES' : 'NO') . '<br>';
+        $debugInfo .= '- bank_code empty: ' . (empty($accountDetails['bank_code']) ? 'YES' : 'NO') . '<br>';
+        $debugInfo .= '<strong>Missing Fields:</strong> ' . (empty($missingFields) ? 'NONE' : implode(', ', $missingFields)) . '<br>';
+        $debugInfo .= '</div>';
+        
         if (!empty($missingFields)) {
             $_SESSION['flash_error'] = 'Please fill in all required account details. Missing: ' . implode(', ', $missingFields);
+            $_SESSION['debug_info'] = $debugInfo;
             header('Location: request_payout.php');
             exit;
         }
@@ -219,6 +251,11 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
         <?php if ($flash['error']): ?>
             <div class="alert alert-error"><?= htmlspecialchars($flash['error']) ?></div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['debug_info'])): ?>
+            <?= $_SESSION['debug_info'] ?>
+            <?php unset($_SESSION['debug_info']); ?>
         <?php endif; ?>
 
         <div class="form-section">
