@@ -26,7 +26,7 @@ $payoutModel = new PayoutRequest();
 $availableEarnings = $payoutModel->getAvailableEarnings($userId);
 
 // Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     $amount = (float)($_POST['amount'] ?? 0);
     $payoutMethod = $_POST['payout_method'] ?? 'paystack';
     $accountDetails = [];
@@ -45,32 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Collect account details based on method
+    // IMPORTANT: Fields in display:none containers aren't submitted by browsers
+    // So we need to check ALL possible field names regardless of method
     if ($payoutMethod === 'paystack') {
-        // Debug: Log all POST data
-        error_log("=== PAYOUT REQUEST DEBUG ===");
-        error_log("All POST data: " . json_encode($_POST));
-        error_log("Payout method: " . $payoutMethod);
-        
-        $accountName = trim($_POST['account_name'] ?? '');
-        $accountNumber = trim($_POST['account_number'] ?? '');
-        $bankCode = trim($_POST['bank_code'] ?? '');
-        
-        error_log("Raw values - account_name: '" . ($_POST['account_name'] ?? 'NOT SET') . "'");
-        error_log("Raw values - account_number: '" . ($_POST['account_number'] ?? 'NOT SET') . "'");
-        error_log("Raw values - bank_code: '" . ($_POST['bank_code'] ?? 'NOT SET') . "'");
-        error_log("Trimmed values - account_name: '" . $accountName . "'");
-        error_log("Trimmed values - account_number: '" . $accountNumber . "'");
-        error_log("Trimmed values - bank_code: '" . $bankCode . "'");
-        
         $accountDetails = [
             'type' => trim($_POST['account_type'] ?? 'mobile_money'),
-            'name' => $accountName,
-            'account_number' => $accountNumber,
-            'bank_code' => $bankCode,
+            'name' => trim($_POST['account_name'] ?? ''),
+            'account_number' => trim($_POST['account_number'] ?? ''),
+            'bank_code' => trim($_POST['bank_code'] ?? ''),
         ];
-        
-        error_log("Final accountDetails: " . json_encode($accountDetails));
-        error_log("Empty checks - name: " . (empty($accountDetails['name']) ? 'YES (EMPTY)' : 'NO (HAS VALUE)') . ", account_number: " . (empty($accountDetails['account_number']) ? 'YES (EMPTY)' : 'NO (HAS VALUE)') . ", bank_code: " . (empty($accountDetails['bank_code']) ? 'YES (EMPTY)' : 'NO (HAS VALUE)'));
     } elseif ($payoutMethod === 'mobile_money') {
         $accountDetails = [
             'phone' => trim($_POST['phone'] ?? ''),
@@ -199,24 +182,10 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             color: #6b7280;
         }
         .account-details {
-            /* Hide visually but keep in DOM so form fields are submitted */
-            /* Use visibility and position instead of display: none */
-            visibility: hidden;
-            position: absolute;
-            left: -9999px;
-            height: 0;
-            overflow: hidden;
-            opacity: 0;
-            pointer-events: none;
+            display: none;
         }
         .account-details.active {
-            visibility: visible;
-            position: static;
-            left: auto;
-            height: auto;
-            overflow: visible;
-            opacity: 1;
-            pointer-events: auto;
+            display: block;
         }
     </style>
 </head>
@@ -257,7 +226,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 Available Earnings: <strong style="color: #1f2937;">GH₵<?= number_format($availableEarnings, 2) ?></strong>
             </p>
 
-            <form method="POST" id="payout_form" onsubmit="return validateAndSubmit()">
+            <form method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" id="payout_form" onsubmit="prepareFormSubmission(event)">
                 <div class="form-group">
                     <label for="amount">Amount (GHS) *</label>
                     <input type="number" id="amount" name="amount" step="0.01" min="0.01" max="<?= $availableEarnings ?>" required>
@@ -284,15 +253,15 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     </div>
                     <div class="form-group">
                         <label for="account_name">Account Name *</label>
-                        <input type="text" id="account_name" name="account_name" required value="<?= htmlspecialchars($_POST['account_name'] ?? '') ?>">
+                        <input type="text" id="account_name" name="account_name" required value="<?= htmlspecialchars($_POST['account_name'] ?? '') ?>" autocomplete="name">
                     </div>
                     <div class="form-group">
                         <label for="account_number">Account/Phone Number *</label>
-                        <input type="text" id="account_number" name="account_number" required value="<?= htmlspecialchars($_POST['account_number'] ?? '') ?>">
+                        <input type="text" id="account_number" name="account_number" required value="<?= htmlspecialchars($_POST['account_number'] ?? '') ?>" autocomplete="tel">
                     </div>
                     <div class="form-group">
                         <label for="bank_code">Bank Code / Network *</label>
-                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>">
+                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>" autocomplete="off">
                         <small>For Mobile Money: MTN, VOD, or TIGO. For Bank Account: Enter the bank code.</small>
                     </div>
                 </div>
@@ -350,23 +319,17 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         function toggleAccountDetails() {
             const method = document.getElementById('payout_method').value;
             
-            // Hide all sections visually
+            // Hide all
             document.getElementById('paystack_details').classList.remove('active');
             document.getElementById('mobile_money_details').classList.remove('active');
             document.getElementById('bank_transfer_details').classList.remove('active');
             
-            // Remove required attributes from all fields first (but keep them enabled for submission)
-            document.querySelectorAll('#paystack_details input, #paystack_details select').forEach(el => {
-                el.removeAttribute('required');
-            });
-            document.querySelectorAll('#mobile_money_details input, #mobile_money_details select').forEach(el => {
-                el.removeAttribute('required');
-            });
-            document.querySelectorAll('#bank_transfer_details input, #bank_transfer_details select').forEach(el => {
+            // Remove required from all
+            document.querySelectorAll('.account-details input, .account-details select').forEach(el => {
                 el.removeAttribute('required');
             });
             
-            // Show relevant one and add required attributes
+            // Show relevant one and add required
             if (method === 'paystack') {
                 document.getElementById('paystack_details').classList.add('active');
                 document.querySelectorAll('#paystack_details input[type="text"], #paystack_details select').forEach(el => {
@@ -380,48 +343,28 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             } else if (method === 'bank_transfer') {
                 document.getElementById('bank_transfer_details').classList.add('active');
                 document.querySelectorAll('#bank_transfer_details input[type="text"]').forEach(el => {
-                    if (el.id !== 'bank_code_field') { // Bank code is optional
+                    if (el.id !== 'bank_code_field') {
                         el.setAttribute('required', 'required');
                     }
                 });
             }
         }
         
-        function validateAndSubmit() {
-            const method = document.getElementById('payout_method').value;
-            let isValid = true;
-            let missingFields = [];
-            
-            if (method === 'paystack') {
-                const accountName = document.getElementById('account_name').value.trim();
-                const accountNumber = document.getElementById('account_number').value.trim();
-                const bankCode = document.getElementById('bank_code').value.trim();
-                
-                console.log('Validating Paystack form:', {
-                    accountName: accountName,
-                    accountNumber: accountNumber,
-                    bankCode: bankCode
-                });
-                
-                if (!accountName) {
-                    missingFields.push('Account Name');
-                    isValid = false;
+        function prepareFormSubmission(event) {
+            // Make all hidden sections visible temporarily so their fields are submitted
+            const allSections = document.querySelectorAll('.account-details');
+            allSections.forEach(section => {
+                if (!section.classList.contains('active')) {
+                    // Temporarily show hidden sections
+                    section.style.display = 'block';
+                    section.style.position = 'absolute';
+                    section.style.left = '-9999px';
+                    section.style.opacity = '0';
+                    section.style.pointerEvents = 'none';
                 }
-                if (!accountNumber) {
-                    missingFields.push('Account/Phone Number');
-                    isValid = false;
-                }
-                if (!bankCode) {
-                    missingFields.push('Bank Code / Network');
-                    isValid = false;
-                }
-            }
+            });
             
-            if (!isValid) {
-                alert('Please fill in all required fields: ' + missingFields.join(', '));
-                return false;
-            }
-            
+            // Let the form submit normally - all fields are now in the DOM and will be submitted
             return true;
         }
         
