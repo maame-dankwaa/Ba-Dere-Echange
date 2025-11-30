@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['phone'] = 'Phone number is required.';
     }
 
-    // Handle file upload (optional)
+    // Handle file upload
     $idDocumentPath = null;
     if (isset($_FILES['id_document']) && $_FILES['id_document']['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];

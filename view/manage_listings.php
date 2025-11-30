@@ -150,6 +150,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 <h1>Manage Listings</h1>
                 <div class="header-actions">
                     <a href="../view/analytics.php" class="btn-secondary">View Analytics</a>
+                    <a href="../view/vendor_earnings.php" class="btn-secondary">My Earnings</a>
                     <a href="../view/list_book.php" class="btn-primary">Add New Listing</a>
                 </div>
             </div>

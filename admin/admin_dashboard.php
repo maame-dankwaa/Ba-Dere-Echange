@@ -233,6 +233,12 @@ if (!defined('SHOW_DEBUG_ERRORS')) {
                 </div>
 
                 <div class="account-section" style="padding: 24px;">
+                    <h3 style="margin-bottom: 12px;">Payout Requests</h3>
+                    <p style="margin-bottom: 16px; color: #666;">Manage vendor payout requests and process payments</p>
+                    <a href="../admin/payout_requests.php" class="btn-primary">Manage Payouts</a>
+                </div>
+
+                <div class="account-section" style="padding: 24px;">
                     <h3 style="margin-bottom: 12px;">Browse Books</h3>
                     <p style="margin-bottom: 16px; color: #666;">View all books on the platform</p>
                     <a href="../actions/browse_books.php" class="btn-primary">Browse Books</a>
