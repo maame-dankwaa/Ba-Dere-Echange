@@ -130,12 +130,13 @@ class ManageListingsController
         }
 
         try {
-            // Soft delete - update status to 'deleted'
-            $sql = "UPDATE fp_books SET status = 'deleted' WHERE book_id = :id";
+            // Soft delete - update status to 'inactive'
+            $sql = "UPDATE fp_books SET status = 'inactive' WHERE book_id = :id";
             $this->db->query($sql, ['id' => $bookId]);
 
             $_SESSION['flash_success'] = 'Listing deleted successfully.';
         } catch (Exception $e) {
+            error_log('Delete listing error: ' . $e->getMessage());
             $_SESSION['flash_error'] = 'Failed to delete listing. Please try again.';
         }
 
