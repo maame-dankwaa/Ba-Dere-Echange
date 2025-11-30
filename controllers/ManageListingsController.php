@@ -109,53 +109,76 @@ class ManageListingsController
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ../view/manage_listings.php');
-            return;
+            exit;
         }
 
         $bookId = (int)($_POST['book_id'] ?? 0);
         $userId = $this->getUserId();
+
+        if ($bookId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid book ID.';
+            header('Location: ../view/manage_listings.php');
+            exit;
+        }
 
         // Verify ownership
         $book = $this->book->getById($bookId);
         if (!$book || (int)$book['seller_id'] !== $userId) {
             $_SESSION['flash_error'] = 'You do not have permission to delete this listing.';
             header('Location: ../view/manage_listings.php');
-            return;
+            exit;
         }
 
-        // Soft delete - update status to 'deleted'
-        $sql = "UPDATE fp_books SET status = 'deleted' WHERE book_id = :id";
-        $this->db->query($sql, ['id' => $bookId]);
+        try {
+            // Soft delete - update status to 'deleted'
+            $sql = "UPDATE fp_books SET status = 'deleted' WHERE book_id = :id";
+            $this->db->query($sql, ['id' => $bookId]);
 
-        $_SESSION['flash_success'] = 'Listing deleted successfully.';
+            $_SESSION['flash_success'] = 'Listing deleted successfully.';
+        } catch (Exception $e) {
+            $_SESSION['flash_error'] = 'Failed to delete listing. Please try again.';
+        }
+
         header('Location: ../view/manage_listings.php');
+        exit;
     }
 
     public function toggleStatus(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ../view/manage_listings.php');
-            return;
+            exit;
         }
 
         $bookId = (int)($_POST['book_id'] ?? 0);
         $userId = $this->getUserId();
+
+        if ($bookId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid book ID.';
+            header('Location: ../view/manage_listings.php');
+            exit;
+        }
 
         // Verify ownership
         $book = $this->book->getById($bookId);
         if (!$book || (int)$book['seller_id'] !== $userId) {
             $_SESSION['flash_error'] = 'You do not have permission to modify this listing.';
             header('Location: ../view/manage_listings.php');
-            return;
+            exit;
         }
 
-        // Toggle between active and inactive
-        $newStatus = $book['status'] === 'active' ? 'inactive' : 'active';
-        $sql = "UPDATE fp_books SET status = :status WHERE book_id = :id";
-        $db = Database::getInstance();
-        $db->query($sql, ['status' => $newStatus, 'id' => $bookId]);
+        try {
+            // Toggle between active and inactive
+            $newStatus = $book['status'] === 'active' ? 'inactive' : 'active';
+            $sql = "UPDATE fp_books SET status = :status WHERE book_id = :id";
+            $this->db->query($sql, ['status' => $newStatus, 'id' => $bookId]);
 
-        $_SESSION['flash_success'] = 'Listing status updated successfully.';
+            $_SESSION['flash_success'] = 'Listing status updated successfully.';
+        } catch (Exception $e) {
+            $_SESSION['flash_error'] = 'Failed to update listing status. Please try again.';
+        }
+
         header('Location: ../view/manage_listings.php');
+        exit;
     }
 }
