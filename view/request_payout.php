@@ -201,11 +201,9 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             margin-top: 4px;
             color: #6b7280;
         }
-        .account-details {
+        #mobile_money_details,
+        #bank_transfer_details {
             display: none;
-        }
-        .account-details.active {
-            display: block;
         }
     </style>
 </head>
@@ -251,7 +249,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 Available Earnings: <strong style="color: #1f2937;">GH₵<?= number_format($availableEarnings, 2) ?></strong>
             </p>
 
-            <form method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" id="payout_form">
+            <form method="POST" id="payout_form">
                 <div class="form-group">
                     <label for="amount">Amount (GHS) *</label>
                     <input type="number" id="amount" name="amount" step="0.01" min="0.01" max="<?= $availableEarnings ?>" required>
@@ -268,7 +266,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 </div>
 
                 <!-- Paystack Account Details -->
-                <div id="paystack_details" class="account-details active" style="display: block !important;">
+                <div id="paystack_details">
                     <div class="form-group">
                         <label for="account_type">Account Type *</label>
                         <select id="account_type" name="account_type" required>
@@ -278,7 +276,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     </div>
                     <div class="form-group">
                         <label for="bank_code">Bank Code / Network *</label>
-                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>" autocomplete="off" style="display: block !important; visibility: visible !important;">
+                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>">
                         <small>For Mobile Money: MTN, VOD, or TIGO. For Bank Account: Enter the bank code.</small>
                     </div>
                 </div>
@@ -337,48 +335,19 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             const method = document.getElementById('payout_method').value;
             
             // Hide all
-            document.getElementById('paystack_details').classList.remove('active');
             document.getElementById('paystack_details').style.display = 'none';
-            document.getElementById('mobile_money_details').classList.remove('active');
             document.getElementById('mobile_money_details').style.display = 'none';
-            document.getElementById('bank_transfer_details').classList.remove('active');
             document.getElementById('bank_transfer_details').style.display = 'none';
             
-            // Remove required from all
-            document.querySelectorAll('.account-details input, .account-details select').forEach(el => {
-                el.removeAttribute('required');
-            });
-            
-            // Show relevant one and add required
+            // Show relevant one
             if (method === 'paystack') {
-                const paystackDiv = document.getElementById('paystack_details');
-                paystackDiv.classList.add('active');
-                paystackDiv.style.display = 'block';
-                document.querySelectorAll('#paystack_details input[type="text"], #paystack_details select').forEach(el => {
-                    el.setAttribute('required', 'required');
-                    el.disabled = false;
-                });
+                document.getElementById('paystack_details').style.display = 'block';
             } else if (method === 'mobile_money') {
-                const mobileDiv = document.getElementById('mobile_money_details');
-                mobileDiv.classList.add('active');
-                mobileDiv.style.display = 'block';
-                document.querySelectorAll('#mobile_money_details input, #mobile_money_details select').forEach(el => {
-                    el.setAttribute('required', 'required');
-                    el.disabled = false;
-                });
+                document.getElementById('mobile_money_details').style.display = 'block';
             } else if (method === 'bank_transfer') {
-                const bankDiv = document.getElementById('bank_transfer_details');
-                bankDiv.classList.add('active');
-                bankDiv.style.display = 'block';
-                document.querySelectorAll('#bank_transfer_details input[type="text"]').forEach(el => {
-                    if (el.id !== 'bank_code_field') {
-                        el.setAttribute('required', 'required');
-                    }
-                    el.disabled = false;
-                });
+                document.getElementById('bank_transfer_details').style.display = 'block';
             }
         }
-        
         
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
