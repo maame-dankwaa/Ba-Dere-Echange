@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Collect account details based on method
     if ($payoutMethod === 'paystack') {
+        // Debug: Log all POST data
+        error_log("All POST data: " . json_encode($_POST));
+        
         $accountDetails = [
             'type' => trim($_POST['account_type'] ?? 'mobile_money'),
             'name' => trim($_POST['account_name'] ?? ''),
@@ -54,10 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         
         // Debug: Log what we received
-        error_log("Paystack payout request - account_name: " . ($_POST['account_name'] ?? 'NOT SET'));
-        error_log("Paystack payout request - account_number: " . ($_POST['account_number'] ?? 'NOT SET'));
-        error_log("Paystack payout request - bank_code: " . ($_POST['bank_code'] ?? 'NOT SET'));
+        error_log("Paystack payout request - account_name: '" . ($_POST['account_name'] ?? 'NOT SET') . "'");
+        error_log("Paystack payout request - account_number: '" . ($_POST['account_number'] ?? 'NOT SET') . "'");
+        error_log("Paystack payout request - bank_code: '" . ($_POST['bank_code'] ?? 'NOT SET') . "'");
         error_log("Paystack payout request - accountDetails: " . json_encode($accountDetails));
+        error_log("Paystack payout request - empty checks - name: " . (empty($accountDetails['name']) ? 'YES' : 'NO') . ", account_number: " . (empty($accountDetails['account_number']) ? 'YES' : 'NO') . ", bank_code: " . (empty($accountDetails['bank_code']) ? 'YES' : 'NO'));
     } elseif ($payoutMethod === 'mobile_money') {
         $accountDetails = [
             'phone' => trim($_POST['phone'] ?? ''),
@@ -186,6 +190,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             color: #6b7280;
         }
         .account-details {
+            /* Hide visually but keep in DOM so form fields are submitted */
             display: none;
         }
         .account-details.active {
@@ -230,7 +235,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 Available Earnings: <strong style="color: #1f2937;">GH₵<?= number_format($availableEarnings, 2) ?></strong>
             </p>
 
-            <form method="POST">
+            <form method="POST" id="payout_form" onsubmit="return validateAndSubmit()">
                 <div class="form-group">
                     <label for="amount">Amount (GHS) *</label>
                     <input type="number" id="amount" name="amount" step="0.01" min="0.01" max="<?= $availableEarnings ?>" required>
@@ -323,7 +328,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         function toggleAccountDetails() {
             const method = document.getElementById('payout_method').value;
             
-            // Hide all
+            // Hide all sections visually but keep fields accessible
             document.getElementById('paystack_details').classList.remove('active');
             document.getElementById('mobile_money_details').classList.remove('active');
             document.getElementById('bank_transfer_details').classList.remove('active');
@@ -331,24 +336,29 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             // Remove required attributes from all fields first
             document.querySelectorAll('#paystack_details input, #paystack_details select').forEach(el => {
                 el.removeAttribute('required');
+                el.disabled = true;
             });
             document.querySelectorAll('#mobile_money_details input, #mobile_money_details select').forEach(el => {
                 el.removeAttribute('required');
+                el.disabled = true;
             });
             document.querySelectorAll('#bank_transfer_details input, #bank_transfer_details select').forEach(el => {
                 el.removeAttribute('required');
+                el.disabled = true;
             });
             
             // Show relevant one and add required attributes
             if (method === 'paystack') {
                 document.getElementById('paystack_details').classList.add('active');
-                document.querySelectorAll('#paystack_details input[type="text"], #paystack_details select').forEach(el => {
+                document.querySelectorAll('#paystack_details input, #paystack_details select').forEach(el => {
                     el.setAttribute('required', 'required');
+                    el.disabled = false;
                 });
             } else if (method === 'mobile_money') {
                 document.getElementById('mobile_money_details').classList.add('active');
                 document.querySelectorAll('#mobile_money_details input, #mobile_money_details select').forEach(el => {
                     el.setAttribute('required', 'required');
+                    el.disabled = false;
                 });
             } else if (method === 'bank_transfer') {
                 document.getElementById('bank_transfer_details').classList.add('active');
@@ -356,8 +366,76 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     if (el.id !== 'bank_code_field') { // Bank code is optional
                         el.setAttribute('required', 'required');
                     }
+                    el.disabled = false;
                 });
             }
+        }
+        
+        function validateAndSubmit() {
+            const method = document.getElementById('payout_method').value;
+            let isValid = true;
+            let missingFields = [];
+            
+            // Enable all fields and make hidden sections visible temporarily so they get submitted
+            document.querySelectorAll('input, select').forEach(el => {
+                el.disabled = false;
+            });
+            
+            // Make all sections visible temporarily so their fields are submitted
+            const allSections = document.querySelectorAll('.account-details');
+            allSections.forEach(section => {
+                const originalDisplay = section.style.display;
+                section.style.display = 'block';
+                section.style.visibility = 'hidden';
+                section.style.position = 'absolute';
+                section.style.left = '-9999px';
+                section.style.height = 'auto';
+                section.setAttribute('data-original-display', originalDisplay || 'none');
+            });
+            
+            if (method === 'paystack') {
+                const accountName = document.getElementById('account_name').value.trim();
+                const accountNumber = document.getElementById('account_number').value.trim();
+                const bankCode = document.getElementById('bank_code').value.trim();
+                
+                console.log('Validating Paystack form:', {
+                    accountName: accountName,
+                    accountNumber: accountNumber,
+                    bankCode: bankCode
+                });
+                
+                if (!accountName) {
+                    missingFields.push('Account Name');
+                    isValid = false;
+                }
+                if (!accountNumber) {
+                    missingFields.push('Account/Phone Number');
+                    isValid = false;
+                }
+                if (!bankCode) {
+                    missingFields.push('Bank Code / Network');
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                // Restore sections before showing error
+                allSections.forEach(section => {
+                    const originalDisplay = section.getAttribute('data-original-display') || 'none';
+                    section.style.display = originalDisplay;
+                    section.style.visibility = '';
+                    section.style.position = '';
+                    section.style.left = '';
+                    section.style.height = '';
+                });
+                // Re-apply active class
+                toggleAccountDetails();
+                alert('Please fill in all required fields: ' + missingFields.join(', '));
+                return false;
+            }
+            
+            // Keep sections visible for submission (they'll be reset on page reload)
+            return true;
         }
         
         // Initialize on page load
