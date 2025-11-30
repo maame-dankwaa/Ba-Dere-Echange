@@ -313,16 +313,32 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                                                     </button>
                                                 </form>
                                                 <form method="POST" action="../actions/delete_listing.php"
-                                                      onsubmit="return confirm('Are you sure you want to delete this listing?');"
-                                                      style="display: inline;">
+                                                      onsubmit="return confirmDelete(this, <?= $listing['book_id'] ?>);"
+                                                      style="display: inline-block;">
                                                     <input type="hidden" name="book_id" value="<?= $listing['book_id'] ?>">
-                                                    <button type="submit" class="btn-sm btn-delete" title="Delete">
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <polyline points="3 6 5 6 21 6"/>
-                                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                                                        </svg>
-                                                    </button>
+                                                    <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                                                        <button type="submit" class="btn-sm btn-delete" title="Delete">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <polyline points="3 6 5 6 21 6"/>
+                                                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                                            </svg>
+                                                        </button>
+                                                        <label style="font-size: 11px; color: #666; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                                            <input type="checkbox" name="hard_delete" value="1" style="margin: 0;">
+                                                            Permanent delete
+                                                        </label>
+                                                    </div>
                                                 </form>
+                                                <script>
+                                                function confirmDelete(form, bookId) {
+                                                    const isHardDelete = form.hard_delete && form.hard_delete.checked;
+                                                    if (isHardDelete) {
+                                                        return confirm('⚠️ WARNING: This will permanently delete the listing from the database. This action cannot be undone!\n\nNote: If the listing has transactions or rentals, it cannot be permanently deleted.\n\nAre you sure you want to permanently delete this listing?');
+                                                    } else {
+                                                        return confirm('Are you sure you want to deactivate this listing? It will be hidden but can be reactivated later.');
+                                                    }
+                                                }
+                                                </script>
                                             </div>
                                         </td>
                                     </tr>

@@ -114,6 +114,7 @@ class ManageListingsController
 
         $bookId = (int)($_POST['book_id'] ?? 0);
         $userId = $this->getUserId();
+        $hardDelete = isset($_POST['hard_delete']) && $_POST['hard_delete'] === '1';
 
         if ($bookId <= 0) {
             $_SESSION['flash_error'] = 'Invalid book ID.';
@@ -130,11 +131,36 @@ class ManageListingsController
         }
 
         try {
-            // Soft delete - update status to 'inactive'
-            $sql = "UPDATE fp_books SET status = 'inactive' WHERE book_id = :id";
-            $this->db->query($sql, ['id' => $bookId]);
+            if ($hardDelete) {
+                // Hard delete - permanently remove from database
+                // Check if book has transactions or rentals
+                $hasTransactions = $this->db->fetch(
+                    "SELECT COUNT(*) as count FROM fp_transactions WHERE book_id = :id",
+                    ['id' => $bookId]
+                );
+                $hasRentals = $this->db->fetch(
+                    "SELECT COUNT(*) as count FROM fp_rentals WHERE book_id = :id",
+                    ['id' => $bookId]
+                );
 
-            $_SESSION['flash_success'] = 'Listing deleted successfully.';
+                if (($hasTransactions['count'] ?? 0) > 0 || ($hasRentals['count'] ?? 0) > 0) {
+                    $_SESSION['flash_error'] = 'Cannot permanently delete listing because it has associated transactions or rentals. Please deactivate it instead.';
+                    header('Location: ../view/manage_listings.php');
+                    exit;
+                }
+
+                // Delete the book (cascades will handle reviews, wishlists, featured listings, etc.)
+                $sql = "DELETE FROM fp_books WHERE book_id = :id";
+                $this->db->query($sql, ['id' => $bookId]);
+
+                $_SESSION['flash_success'] = 'Listing permanently deleted.';
+            } else {
+                // Soft delete - update status to 'inactive'
+                $sql = "UPDATE fp_books SET status = 'inactive' WHERE book_id = :id";
+                $this->db->query($sql, ['id' => $bookId]);
+
+                $_SESSION['flash_success'] = 'Listing deactivated successfully.';
+            }
         } catch (Exception $e) {
             error_log('Delete listing error: ' . $e->getMessage());
             error_log('Delete listing error trace: ' . $e->getTraceAsString());
