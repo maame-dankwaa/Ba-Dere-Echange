@@ -271,7 +271,21 @@ class BookController
 
         $this->requireAuth('../view/list_book.php');
 
+        // Check if user is vendor or admin
+        $userRole = $_SESSION['user_role'] ?? 'guest';
+        if ($userRole !== 'vendor' && $userRole !== 'admin') {
+            $_SESSION['flash_error'] = 'You must be a vendor to list books.';
+            $this->redirect('../view/list_book.php');
+            return;
+        }
+
         $sellerId = $this->getUserId();
+        
+        if (!$sellerId) {
+            $_SESSION['flash_error'] = 'Invalid user session. Please login again.';
+            $this->redirect('../login/login.php');
+            return;
+        }
 
         // Collect form data
         $data = [
