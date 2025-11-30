@@ -66,14 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     if ($payoutMethod === 'paystack') {
         $accountDetails = [
             'type' => trim($_POST['account_type'] ?? 'mobile_money'),
-            'name' => trim($_POST['account_name'] ?? ''),
-            'account_number' => trim($_POST['account_number'] ?? ''),
             'bank_code' => trim($_POST['bank_code'] ?? ''),
         ];
         
         $debugInfo .= '<strong>Paystack Account Details:</strong><pre>' . htmlspecialchars(print_r($accountDetails, true)) . '</pre>';
-        $debugInfo .= '<strong>account_name value:</strong> "' . htmlspecialchars($_POST['account_name'] ?? 'NOT SET') . '"<br>';
-        $debugInfo .= '<strong>account_number value:</strong> "' . htmlspecialchars($_POST['account_number'] ?? 'NOT SET') . '"<br>';
         $debugInfo .= '<strong>bank_code value:</strong> "' . htmlspecialchars($_POST['bank_code'] ?? 'NOT SET') . '"<br>';
     } elseif ($payoutMethod === 'mobile_money') {
         $accountDetails = [
@@ -95,19 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     // Validate required fields with detailed error messages
     $missingFields = [];
     if ($payoutMethod === 'paystack') {
-        if (empty($accountDetails['name'])) {
-            $missingFields[] = 'Account Name';
-        }
-        if (empty($accountDetails['account_number'])) {
-            $missingFields[] = 'Account/Phone Number';
-        }
         if (empty($accountDetails['bank_code'])) {
             $missingFields[] = 'Bank Code / Network';
         }
         
         $debugInfo .= '<strong>Missing Fields Check:</strong><br>';
-        $debugInfo .= '- name empty: ' . (empty($accountDetails['name']) ? 'YES' : 'NO') . '<br>';
-        $debugInfo .= '- account_number empty: ' . (empty($accountDetails['account_number']) ? 'YES' : 'NO') . '<br>';
         $debugInfo .= '- bank_code empty: ' . (empty($accountDetails['bank_code']) ? 'YES' : 'NO') . '<br>';
         $debugInfo .= '<strong>Missing Fields:</strong> ' . (empty($missingFields) ? 'NONE' : implode(', ', $missingFields)) . '<br>';
         $debugInfo .= '</div>';
@@ -289,14 +277,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="account_name">Account Name *</label>
-                        <input type="text" id="account_name" name="account_name" required value="<?= htmlspecialchars($_POST['account_name'] ?? '') ?>" autocomplete="name">
-                    </div>
-                    <div class="form-group">
-                        <label for="account_number">Account/Phone Number *</label>
-                        <input type="text" id="account_number" name="account_number" required value="<?= htmlspecialchars($_POST['account_number'] ?? '') ?>" autocomplete="tel">
-                    </div>
-                    <div class="form-group">
                         <label for="bank_code">Bank Code / Network *</label>
                         <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>" autocomplete="off">
                         <small>For Mobile Money: MTN, VOD, or TIGO. For Bank Account: Enter the bank code.</small>
@@ -397,42 +377,22 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             let accountName, accountNumber, bankCode;
             
             if (method === 'paystack') {
-                const accountNameEl = document.getElementById('account_name');
-                const accountNumberEl = document.getElementById('account_number');
                 const bankCodeEl = document.getElementById('bank_code');
-                
-                accountName = accountNameEl.value.trim();
-                accountNumber = accountNumberEl.value.trim();
                 bankCode = bankCodeEl.value.trim();
                 
-                console.log('Before submission - account_name element:', accountNameEl);
-                console.log('Before submission - account_name value:', accountName);
-                console.log('Before submission - account_number value:', accountNumber);
                 console.log('Before submission - bank_code value:', bankCode);
                 
-                // If values are empty, show error
-                if (!accountName || !accountNumber || !bankCode) {
-                    alert('Please fill in all required fields:\n' +
-                          'Account Name: ' + (accountName || 'EMPTY') + '\n' +
-                          'Account Number: ' + (accountNumber || 'EMPTY') + '\n' +
+                // If value is empty, show error
+                if (!bankCode) {
+                    alert('Please fill in the required field:\n' +
                           'Bank Code: ' + (bankCode || 'EMPTY'));
                     return false;
                 }
                 
-                // Force set values explicitly
-                accountNameEl.value = accountName;
-                accountNumberEl.value = accountNumber;
+                // Force set value explicitly
                 bankCodeEl.value = bankCode;
                 
-                // Make sure the fields are visible and enabled
-                accountNameEl.style.display = 'block';
-                accountNameEl.style.visibility = 'visible';
-                accountNameEl.disabled = false;
-                
-                accountNumberEl.style.display = 'block';
-                accountNumberEl.style.visibility = 'visible';
-                accountNumberEl.disabled = false;
-                
+                // Make sure the field is visible and enabled
                 bankCodeEl.style.display = 'block';
                 bankCodeEl.style.visibility = 'visible';
                 bankCodeEl.disabled = false;
