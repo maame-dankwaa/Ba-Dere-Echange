@@ -47,43 +47,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Collect account details based on method
     if ($payoutMethod === 'paystack') {
         $accountDetails = [
-            'type' => $_POST['account_type'] ?? 'mobile_money',
-            'name' => $_POST['account_name'] ?? '',
-            'account_number' => $_POST['account_number'] ?? '',
-            'bank_code' => $_POST['bank_code'] ?? $_POST['network'] ?? '',
+            'type' => trim($_POST['account_type'] ?? 'mobile_money'),
+            'name' => trim($_POST['account_name'] ?? ''),
+            'account_number' => trim($_POST['account_number'] ?? ''),
+            'bank_code' => trim($_POST['bank_code'] ?? ''),
         ];
+        
+        // Debug: Log what we received
+        error_log("Paystack payout request - account_name: " . ($_POST['account_name'] ?? 'NOT SET'));
+        error_log("Paystack payout request - account_number: " . ($_POST['account_number'] ?? 'NOT SET'));
+        error_log("Paystack payout request - bank_code: " . ($_POST['bank_code'] ?? 'NOT SET'));
+        error_log("Paystack payout request - accountDetails: " . json_encode($accountDetails));
     } elseif ($payoutMethod === 'mobile_money') {
         $accountDetails = [
-            'phone' => $_POST['phone'] ?? '',
-            'network' => $_POST['network'] ?? '',
-            'name' => $_POST['name'] ?? '',
+            'phone' => trim($_POST['phone'] ?? ''),
+            'network' => trim($_POST['network'] ?? ''),
+            'name' => trim($_POST['name'] ?? ''),
         ];
     } elseif ($payoutMethod === 'bank_transfer') {
         $accountDetails = [
-            'account_name' => $_POST['account_name'] ?? '',
-            'account_number' => $_POST['account_number'] ?? '',
-            'bank_name' => $_POST['bank_name'] ?? '',
-            'bank_code' => $_POST['bank_code'] ?? '',
+            'account_name' => trim($_POST['account_name'] ?? ''),
+            'account_number' => trim($_POST['account_number'] ?? ''),
+            'bank_name' => trim($_POST['bank_name'] ?? ''),
+            'bank_code' => trim($_POST['bank_code'] ?? ''),
         ];
     }
 
-    // Validate required fields
-    $requiredFields = [];
+    // Validate required fields with detailed error messages
+    $missingFields = [];
     if ($payoutMethod === 'paystack') {
-        if (empty($accountDetails['name']) || empty($accountDetails['account_number']) || empty($accountDetails['bank_code'])) {
-            $_SESSION['flash_error'] = 'Please fill in all required account details.';
+        if (empty($accountDetails['name'])) {
+            $missingFields[] = 'Account Name';
+        }
+        if (empty($accountDetails['account_number'])) {
+            $missingFields[] = 'Account/Phone Number';
+        }
+        if (empty($accountDetails['bank_code'])) {
+            $missingFields[] = 'Bank Code / Network';
+        }
+        if (!empty($missingFields)) {
+            $_SESSION['flash_error'] = 'Please fill in all required account details. Missing: ' . implode(', ', $missingFields);
             header('Location: request_payout.php');
             exit;
         }
     } elseif ($payoutMethod === 'mobile_money') {
-        if (empty($accountDetails['phone']) || empty($accountDetails['network']) || empty($accountDetails['name'])) {
-            $_SESSION['flash_error'] = 'Please fill in all required mobile money details.';
+        if (empty($accountDetails['name'])) {
+            $missingFields[] = 'Name';
+        }
+        if (empty($accountDetails['phone'])) {
+            $missingFields[] = 'Phone Number';
+        }
+        if (empty($accountDetails['network'])) {
+            $missingFields[] = 'Network';
+        }
+        if (!empty($missingFields)) {
+            $_SESSION['flash_error'] = 'Please fill in all required mobile money details. Missing: ' . implode(', ', $missingFields);
             header('Location: request_payout.php');
             exit;
         }
     } elseif ($payoutMethod === 'bank_transfer') {
-        if (empty($accountDetails['account_name']) || empty($accountDetails['account_number']) || empty($accountDetails['bank_name'])) {
-            $_SESSION['flash_error'] = 'Please fill in all required bank details.';
+        if (empty($accountDetails['account_name'])) {
+            $missingFields[] = 'Account Name';
+        }
+        if (empty($accountDetails['account_number'])) {
+            $missingFields[] = 'Account Number';
+        }
+        if (empty($accountDetails['bank_name'])) {
+            $missingFields[] = 'Bank Name';
+        }
+        if (!empty($missingFields)) {
+            $_SESSION['flash_error'] = 'Please fill in all required bank details. Missing: ' . implode(', ', $missingFields);
             header('Location: request_payout.php');
             exit;
         }
@@ -224,15 +257,16 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     </div>
                     <div class="form-group">
                         <label for="account_name">Account Name *</label>
-                        <input type="text" id="account_name" name="account_name" required>
+                        <input type="text" id="account_name" name="account_name" required value="<?= htmlspecialchars($_POST['account_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label for="account_number">Account/Phone Number *</label>
-                        <input type="text" id="account_number" name="account_number" required>
+                        <input type="text" id="account_number" name="account_number" required value="<?= htmlspecialchars($_POST['account_number'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label for="bank_code">Bank Code / Network *</label>
-                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required>
+                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>">
+                        <small>For Mobile Money: MTN, VOD, or TIGO. For Bank Account: Enter the bank code.</small>
                     </div>
                 </div>
 
@@ -294,15 +328,42 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             document.getElementById('mobile_money_details').classList.remove('active');
             document.getElementById('bank_transfer_details').classList.remove('active');
             
-            // Show relevant one
+            // Remove required attributes from all fields first
+            document.querySelectorAll('#paystack_details input, #paystack_details select').forEach(el => {
+                el.removeAttribute('required');
+            });
+            document.querySelectorAll('#mobile_money_details input, #mobile_money_details select').forEach(el => {
+                el.removeAttribute('required');
+            });
+            document.querySelectorAll('#bank_transfer_details input, #bank_transfer_details select').forEach(el => {
+                el.removeAttribute('required');
+            });
+            
+            // Show relevant one and add required attributes
             if (method === 'paystack') {
                 document.getElementById('paystack_details').classList.add('active');
+                document.querySelectorAll('#paystack_details input[type="text"], #paystack_details select').forEach(el => {
+                    el.setAttribute('required', 'required');
+                });
             } else if (method === 'mobile_money') {
                 document.getElementById('mobile_money_details').classList.add('active');
+                document.querySelectorAll('#mobile_money_details input, #mobile_money_details select').forEach(el => {
+                    el.setAttribute('required', 'required');
+                });
             } else if (method === 'bank_transfer') {
                 document.getElementById('bank_transfer_details').classList.add('active');
+                document.querySelectorAll('#bank_transfer_details input[type="text"]').forEach(el => {
+                    if (el.id !== 'bank_code_field') { // Bank code is optional
+                        el.setAttribute('required', 'required');
+                    }
+                });
             }
         }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleAccountDetails();
+        });
     </script>
 </body>
 </html>
