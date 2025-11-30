@@ -284,8 +284,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     <div class="form-group">
                         <label for="account_type">Account Type *</label>
                         <select id="account_type" name="account_type" required>
-                            <option value="mobile_money">Mobile Money</option>
-                            <option value="nuban">Bank Account</option>
+                            <option value="mobile_money" <?= (isset($_POST['account_type']) && $_POST['account_type'] === 'mobile_money') ? 'selected' : '' ?>>Mobile Money</option>
+                            <option value="nuban" <?= (isset($_POST['account_type']) && $_POST['account_type'] === 'nuban') ? 'selected' : '' ?>>Bank Account</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -388,21 +388,74 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         }
         
         function prepareFormSubmission(event) {
-            // Make all hidden sections visible temporarily so their fields are submitted
+            event.preventDefault(); // Prevent default submission first
+            
+            const method = document.getElementById('payout_method').value;
+            const form = document.getElementById('payout_form');
+            
+            // Get values from the currently visible/active section
+            let accountName, accountNumber, bankCode;
+            
+            if (method === 'paystack') {
+                const accountNameEl = document.getElementById('account_name');
+                const accountNumberEl = document.getElementById('account_number');
+                const bankCodeEl = document.getElementById('bank_code');
+                
+                accountName = accountNameEl.value.trim();
+                accountNumber = accountNumberEl.value.trim();
+                bankCode = bankCodeEl.value.trim();
+                
+                console.log('Before submission - account_name element:', accountNameEl);
+                console.log('Before submission - account_name value:', accountName);
+                console.log('Before submission - account_number value:', accountNumber);
+                console.log('Before submission - bank_code value:', bankCode);
+                
+                // If values are empty, show error
+                if (!accountName || !accountNumber || !bankCode) {
+                    alert('Please fill in all required fields:\n' +
+                          'Account Name: ' + (accountName || 'EMPTY') + '\n' +
+                          'Account Number: ' + (accountNumber || 'EMPTY') + '\n' +
+                          'Bank Code: ' + (bankCode || 'EMPTY'));
+                    return false;
+                }
+                
+                // Force set values explicitly
+                accountNameEl.value = accountName;
+                accountNumberEl.value = accountNumber;
+                bankCodeEl.value = bankCode;
+                
+                // Make sure the fields are visible and enabled
+                accountNameEl.style.display = 'block';
+                accountNameEl.style.visibility = 'visible';
+                accountNameEl.disabled = false;
+                
+                accountNumberEl.style.display = 'block';
+                accountNumberEl.style.visibility = 'visible';
+                accountNumberEl.disabled = false;
+                
+                bankCodeEl.style.display = 'block';
+                bankCodeEl.style.visibility = 'visible';
+                bankCodeEl.disabled = false;
+            }
+            
+            // Make ALL sections visible before submission
             const allSections = document.querySelectorAll('.account-details');
             allSections.forEach(section => {
-                if (!section.classList.contains('active')) {
-                    // Temporarily show hidden sections
-                    section.style.display = 'block';
-                    section.style.position = 'absolute';
-                    section.style.left = '-9999px';
-                    section.style.opacity = '0';
-                    section.style.pointerEvents = 'none';
-                }
+                section.style.display = 'block';
+                section.style.visibility = 'visible';
             });
             
-            // Let the form submit normally - all fields are now in the DOM and will be submitted
-            return true;
+            // Ensure all inputs are enabled
+            document.querySelectorAll('input, select').forEach(el => {
+                el.disabled = false;
+            });
+            
+            // Now submit the form manually
+            setTimeout(function() {
+                form.submit();
+            }, 100);
+            
+            return false;
         }
         
         // Initialize on page load
