@@ -30,7 +30,7 @@ $payoutModel = new PayoutRequest();
 $availableEarnings = $payoutModel->getAvailableEarnings($userId);
 
 // Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // DEBUG: Show all POST data
     $debugInfo = '<div style="background: #f3f4f6; padding: 20px; margin: 20px 0; border: 2px solid #dc2626; border-radius: 8px;">';
     $debugInfo .= '<h3 style="color: #dc2626; margin-top: 0;">DEBUG INFO:</h3>';
@@ -205,6 +205,15 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         #bank_transfer_details {
             display: none;
         }
+        /* Ensure paystack_details is always visible */
+        #paystack_details {
+            display: block !important;
+        }
+        /* Hide other sections when paystack is selected */
+        #payout_method[value="paystack"] ~ #mobile_money_details,
+        #payout_method[value="paystack"] ~ #bank_transfer_details {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -249,7 +258,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 Available Earnings: <strong style="color: #1f2937;">GH₵<?= number_format($availableEarnings, 2) ?></strong>
             </p>
 
-            <form method="POST" id="payout_form">
+            <form method="POST" id="payout_form" onsubmit="return testFormValues()">
                 <div class="form-group">
                     <label for="amount">Amount (GHS) *</label>
                     <input type="number" id="amount" name="amount" step="0.01" min="0.01" max="<?= $availableEarnings ?>" required>
@@ -258,8 +267,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
                 <div class="form-group">
                     <label for="payout_method">Payout Method *</label>
-                    <select id="payout_method" name="payout_method" required onchange="toggleAccountDetails()">
-                        <option value="paystack">Paystack (Mobile Money/Bank)</option>
+                    <select id="payout_method" name="payout_method" required>
+                        <option value="paystack" selected>Paystack (Mobile Money/Bank)</option>
                         <option value="mobile_money">Mobile Money</option>
                         <option value="bank_transfer">Bank Transfer</option>
                     </select>
@@ -276,7 +285,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     </div>
                     <div class="form-group">
                         <label for="bank_code">Bank Code / Network *</label>
-                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>">
+                        <input type="text" id="bank_code" name="bank_code" placeholder="e.g., MTN, VOD, TIGO for mobile money or bank code for bank account" required value="<?= htmlspecialchars($_POST['bank_code'] ?? '') ?>" autocomplete="off">
                         <small>For Mobile Money: MTN, VOD, or TIGO. For Bank Account: Enter the bank code.</small>
                     </div>
                 </div>
@@ -331,8 +340,32 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     </main>
 
     <script>
-        function toggleAccountDetails() {
-            const method = document.getElementById('payout_method').value;
+        function testFormValues() {
+            const bankCode = document.getElementById('bank_code');
+            const bankCodeValue = bankCode.value;
+            
+            console.log('Form submission test:');
+            console.log('bank_code element:', bankCode);
+            console.log('bank_code value:', bankCodeValue);
+            console.log('bank_code type:', typeof bankCodeValue);
+            console.log('bank_code length:', bankCodeValue.length);
+            
+            if (!bankCodeValue || bankCodeValue.trim() === '') {
+                alert('ERROR: Bank Code field is empty! Value: "' + bankCodeValue + '"');
+                return false;
+            }
+            
+            // Make sure field is enabled and visible
+            bankCode.disabled = false;
+            bankCode.style.display = 'block';
+            bankCode.style.visibility = 'visible';
+            
+            return true;
+        }
+        
+        // Simple toggle without interfering with form values
+        document.getElementById('payout_method').addEventListener('change', function() {
+            const method = this.value;
             
             // Hide all
             document.getElementById('paystack_details').style.display = 'none';
@@ -347,11 +380,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             } else if (method === 'bank_transfer') {
                 document.getElementById('bank_transfer_details').style.display = 'block';
             }
-        }
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleAccountDetails();
         });
     </script>
 </body>
