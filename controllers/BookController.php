@@ -271,21 +271,7 @@ class BookController
 
         $this->requireAuth('../view/list_book.php');
 
-        // Check if user is vendor or admin
-        $userRole = $_SESSION['user_role'] ?? 'guest';
-        if ($userRole !== 'vendor' && $userRole !== 'admin') {
-            $_SESSION['flash_error'] = 'You must be a vendor to list books.';
-            $this->redirect('../view/list_book.php');
-            return;
-        }
-
         $sellerId = $this->getUserId();
-        
-        if (!$sellerId) {
-            $_SESSION['flash_error'] = 'Invalid user session. Please login again.';
-            $this->redirect('../login/login.php');
-            return;
-        }
 
         // Collect form data
         $data = [
@@ -423,27 +409,8 @@ class BookController
                 'data' => $data,
             ]);
 
-            // Show actual error in debug mode
-            if (defined('SHOW_DEBUG_ERRORS') && SHOW_DEBUG_ERRORS) {
-                // In debug mode, show the full error message
-                $errorMessage = 'Could not create listing. Error: ' . htmlspecialchars($e->getMessage());
-                
-                // Add more context for common errors
-                if (strpos($e->getMessage(), 'SQLSTATE') !== false || strpos($e->getMessage(), 'Database') !== false) {
-                    $errorMessage .= ' This appears to be a database error. Please check that all required fields are filled correctly.';
-                }
-            } else {
-                // In production, provide user-friendly messages
-                $errorMessage = 'Could not create listing. Please try again.';
-                
-                if (strpos($e->getMessage(), 'SQLSTATE[23000]') !== false) {
-                    $errorMessage = 'Could not create listing. This may be due to missing required information or a duplicate entry.';
-                } elseif (strpos($e->getMessage(), 'SQLSTATE[42S22]') !== false) {
-                    $errorMessage = 'Could not create listing. Database structure error detected. Please contact support.';
-                } elseif (strpos($e->getMessage(), 'SQLSTATE[HY000]') !== false) {
-                    $errorMessage = 'Could not create listing. Database connection issue. Please try again in a moment.';
-                }
-            }
+            // Always show the actual error message for debugging
+            $errorMessage = 'Could not create listing. Error: ' . htmlspecialchars($e->getMessage());
 
             $_SESSION['form_errors'] = ['general' => $errorMessage];
             $_SESSION['old_form_data'] = $data;
